@@ -73,8 +73,10 @@ const getStudents = async (req, res) => {
 // GET SINGLE STUDENT
 const getStudentById = async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id)
-      .populate("userId", "name email role");
+    const student = await Student.findById(req.params.id).populate(
+      "userId",
+      "name email role",
+    );
 
     if (!student) {
       return res.status(404).json({
