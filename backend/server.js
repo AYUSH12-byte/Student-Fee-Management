@@ -18,7 +18,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 
-// Test route
+// Test routes
 app.get("/", (req, res) => {
   res.json({
     message: "Student Fee Management API is running",
