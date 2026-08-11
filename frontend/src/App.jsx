@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
+import Dashboard from "./pages/admin/Dashboard";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -20,12 +22,12 @@ function App() {
             path="/admin/dashboard"
             element={
               <ProtectedRoute role="admin">
-                <h1 className="p-8 text-3xl font-bold">Admin Dashboard</h1>
+                <Dashboard />
               </ProtectedRoute>
             }
           />
 
-          {/* Student Dashboard */}
+          {/* Student Dashboard - temporary */}
           <Route
             path="/student/dashboard"
             element={
@@ -35,7 +37,7 @@ function App() {
             }
           />
 
-          {/* Invalid route */}
+          {/* Invalid URL */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
