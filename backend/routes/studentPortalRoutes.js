@@ -1,26 +1,23 @@
 const express = require("express");
 
 const {
-  getMyFeeStatus,
+  getMyProfile,
+  getMyFees,
   getMyPayments,
   getMyReceipts,
-  getMyReceiptById,
 } = require("../controllers/studentPortalController");
 
 const protect = require("../middleware/authMiddleware");
+const authorize = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-// Student's own fee information
-router.get("/my-fees", protect, getMyFeeStatus);
+router.get("/my-profile", protect, authorize("student"), getMyProfile);
 
-// Student's own payment history
-router.get("/my-payments", protect, getMyPayments);
+router.get("/my-fees", protect, authorize("student"), getMyFees);
 
-// Student's own receipts
-router.get("/my-receipts", protect, getMyReceipts);
+router.get("/my-payments", protect, authorize("student"), getMyPayments);
 
-// Student's individual receipt
-router.get("/my-receipts/:id", protect, getMyReceiptById);
+router.get("/my-receipts", protect, authorize("student"), getMyReceipts);
 
 module.exports = router;
