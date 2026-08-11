@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+  createReceipt,
   getReceipts,
   getReceiptById,
   getReceiptByPayment,
@@ -11,7 +12,12 @@ const authorize = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
+// Admin only
+router.post("/", protect, authorize("admin"), createReceipt);
+
 router.get("/", protect, authorize("admin"), getReceipts);
+
+router.get("/:id", protect, authorize("admin"), getReceiptById);
 
 router.get(
   "/payment/:paymentId",
@@ -19,7 +25,5 @@ router.get(
   authorize("admin"),
   getReceiptByPayment,
 );
-
-router.get("/:id", protect, authorize("admin"), getReceiptById);
 
 module.exports = router;
