@@ -40,7 +40,13 @@ const studentFeeSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
+);
+
+// Prevent duplicate fee assignment
+studentFeeSchema.index(
+  { studentId: 1, feeStructureId: 1 },
+  { unique: true }
 );
 
 module.exports = mongoose.model("StudentFee", studentFeeSchema);
