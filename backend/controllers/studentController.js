@@ -1,49 +1,118 @@
 const Student = require("../models/Student");
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 
-// CREATE STUDENT
+// ======================================================
+// CREATE STUDENT + USER ACCOUNT
+// ======================================================
+
 const createStudent = async (req, res) => {
   try {
     const {
-      userId,
       studentId,
       name,
+      email,
       class: studentClass,
       section,
       phone,
       address,
+      password,
     } = req.body;
 
-    if (!userId || !studentId || !name || !studentClass) {
+    // Check required fields
+    if (!studentId || !name || !email || !studentClass) {
       return res.status(400).json({
-        message: "userId, studentId, name and class are required",
+        message: "Student ID, name, email and class are required",
       });
     }
 
+    const studentEmail = email.toLowerCase().trim();
+
+    // Check existing student
     const existingStudent = await Student.findOne({
-      $or: [{ userId }, { studentId }],
+      $or: [
+        { studentId },
+        { email: studentEmail },
+      ],
     });
 
     if (existingStudent) {
       return res.status(400).json({
-        message: "Student already exists",
+        message: "Student with this ID or email already exists",
       });
     }
 
-    const student = await Student.create({
-      userId,
-      studentId,
-      name,
-      class: studentClass,
-      section,
-      phone,
-      address,
+    // Check existing user
+    const existingUser = await User.findOne({
+      email: studentEmail,
     });
 
-    res.status(201).json({
-      message: "Student created successfully",
-      student,
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User with this email already exists",
+      });
+    }
+
+    // Default password
+    const studentPassword = password || "Student@123";
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(
+      studentPassword,
+      10
+    );
+
+    // Create User account
+    const user = await User.create({
+      name,
+      email: studentEmail,
+      password: hashedPassword,
+      role: "student",
     });
+
+    try {
+      // Create Student profile
+      const student = await Student.create({
+        studentId,
+        name,
+        email: studentEmail,
+        class: studentClass,
+        section,
+        phone,
+        address,
+        userId: user._id,
+      });
+
+      res.status(201).json({
+        message: "Student and login account created successfully",
+
+        student: {
+          _id: student._id,
+          studentId: student.studentId,
+          name: student.name,
+          email: student.email,
+          class: student.class,
+          section: student.section,
+          phone: student.phone,
+          address: student.address,
+          userId: student.userId,
+        },
+
+        loginDetails: {
+          email: user.email,
+          password: studentPassword,
+        },
+      });
+    } catch (studentError) {
+      // If Student creation fails,
+      // delete the User account that was just created
+      await User.findByIdAndDelete(user._id);
+
+      throw studentError;
+    }
   } catch (error) {
+    console.error("Create Student Error:", error);
+
     res.status(500).json({
       message: "Failed to create student",
       error: error.message,
@@ -51,7 +120,11 @@ const createStudent = async (req, res) => {
   }
 };
 
+
+// ======================================================
 // GET ALL STUDENTS
+// ======================================================
+
 const getStudents = async (req, res) => {
   try {
     const students = await Student.find()
@@ -63,6 +136,8 @@ const getStudents = async (req, res) => {
       students,
     });
   } catch (error) {
+    console.error("Get Students Error:", error);
+
     res.status(500).json({
       message: "Failed to fetch students",
       error: error.message,
@@ -70,13 +145,15 @@ const getStudents = async (req, res) => {
   }
 };
 
+
+// ======================================================
 // GET SINGLE STUDENT
+// ======================================================
+
 const getStudentById = async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id).populate(
-      "userId",
-      "name email role",
-    );
+    const student = await Student.findById(req.params.id)
+      .populate("userId", "name email role");
 
     if (!student) {
       return res.status(404).json({
@@ -88,6 +165,8 @@ const getStudentById = async (req, res) => {
       student,
     });
   } catch (error) {
+    console.error("Get Student Error:", error);
+
     res.status(500).json({
       message: "Failed to fetch student",
       error: error.message,
@@ -95,7 +174,11 @@ const getStudentById = async (req, res) => {
   }
 };
 
+
+// ======================================================
 // UPDATE STUDENT
+// ======================================================
+
 const updateStudent = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -109,26 +192,108 @@ const updateStudent = async (req, res) => {
     const {
       studentId,
       name,
+      email,
       class: studentClass,
       section,
       phone,
       address,
     } = req.body;
 
-    student.studentId = studentId ?? student.studentId;
-    student.name = name ?? student.name;
-    student.class = studentClass ?? student.class;
-    student.section = section ?? student.section;
-    student.phone = phone ?? student.phone;
-    student.address = address ?? student.address;
+    // Check duplicate student ID
+    if (studentId && studentId !== student.studentId) {
+      const existingStudentId = await Student.findOne({
+        studentId,
+        _id: { $ne: student._id },
+      });
+
+      if (existingStudentId) {
+        return res.status(400).json({
+          message: "Student ID already exists",
+        });
+      }
+
+      student.studentId = studentId;
+    }
+
+    // Update email
+    if (email && email.toLowerCase() !== student.email) {
+      const newEmail = email.toLowerCase().trim();
+
+      // Check student email
+      const existingStudentEmail = await Student.findOne({
+        email: newEmail,
+        _id: { $ne: student._id },
+      });
+
+      if (existingStudentEmail) {
+        return res.status(400).json({
+          message: "Email already belongs to another student",
+        });
+      }
+
+      // Check User email
+      const existingUser = await User.findOne({
+        email: newEmail,
+        _id: { $ne: student.userId },
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Email already belongs to another user",
+        });
+      }
+
+      student.email = newEmail;
+
+      // Update login email too
+      if (student.userId) {
+        await User.findByIdAndUpdate(student.userId, {
+          email: newEmail,
+        });
+      }
+    }
+
+    // Update student fields
+    if (name) {
+      student.name = name;
+    }
+
+    if (studentClass) {
+      student.class = studentClass;
+    }
+
+    if (section !== undefined) {
+      student.section = section;
+    }
+
+    if (phone !== undefined) {
+      student.phone = phone;
+    }
+
+    if (address !== undefined) {
+      student.address = address;
+    }
 
     const updatedStudent = await student.save();
 
+    // Update User name as well
+    if (student.userId && name) {
+      await User.findByIdAndUpdate(student.userId, {
+        name,
+      });
+    }
+
+    const populatedStudent = await Student.findById(
+      updatedStudent._id
+    ).populate("userId", "name email role");
+
     res.status(200).json({
       message: "Student updated successfully",
-      student: updatedStudent,
+      student: populatedStudent,
     });
   } catch (error) {
+    console.error("Update Student Error:", error);
+
     res.status(500).json({
       message: "Failed to update student",
       error: error.message,
@@ -136,7 +301,11 @@ const updateStudent = async (req, res) => {
   }
 };
 
-// DELETE STUDENT
+
+// ======================================================
+// DELETE STUDENT + USER ACCOUNT
+// ======================================================
+
 const deleteStudent = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -147,18 +316,31 @@ const deleteStudent = async (req, res) => {
       });
     }
 
-    await student.deleteOne();
+    // Delete Student
+    await Student.findByIdAndDelete(student._id);
+
+    // Delete linked User account
+    if (student.userId) {
+      await User.findByIdAndDelete(student.userId);
+    }
 
     res.status(200).json({
-      message: "Student deleted successfully",
+      message: "Student and user account deleted successfully",
     });
   } catch (error) {
+    console.error("Delete Student Error:", error);
+
     res.status(500).json({
       message: "Failed to delete student",
       error: error.message,
     });
   }
 };
+
+
+// ======================================================
+// EXPORT
+// ======================================================
 
 module.exports = {
   createStudent,
