@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/auth/Login";
+
 import Dashboard from "./pages/admin/Dashboard";
 
+import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+
 import { AuthProvider } from "./context/AuthContext";
 
 function App() {
@@ -17,17 +20,25 @@ function App() {
           {/* Login */}
           <Route path="/login" element={<Login />} />
 
-          {/* Admin Dashboard */}
+          {/* ADMIN ROUTES */}
+
           <Route
-            path="/admin/dashboard"
+            path="/admin"
             element={
               <ProtectedRoute role="admin">
-                <Dashboard />
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            {/* /admin → /admin/dashboard */}
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
 
-          {/* Student Dashboard - temporary */}
+            {/* Dashboard */}
+            <Route path="dashboard" element={<Dashboard />} />
+          </Route>
+
+          {/*STUDENT ROUTE - TEMPORARY*/}
+
           <Route
             path="/student/dashboard"
             element={
