@@ -23,6 +23,7 @@ app.use("/api/student-fees", require("./routes/studentFeeRoutes"));
 app.use("/api/receipts", require("./routes/receiptRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/student-portal", require("./routes/studentPortalRoutes"));
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 // app.use("/api/test", require("./routes/testRoutes"));
 
 // Test routes
