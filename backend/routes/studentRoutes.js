@@ -14,39 +14,14 @@ const authorize = require("../middleware/roleMiddleware");
 const router = express.Router();
 
 // Admin only
-router.post(
-  "/",
-  protect,
-  authorize("admin"),
-  createStudent
-);
+router.post("/", protect, authorize("admin"), createStudent);
 
-router.get(
-  "/",
-  protect,
-  authorize("admin"),
-  getStudents
-);
+router.get("/", protect, authorize("admin"), getStudents);
 
-router.get(
-  "/:id",
-  protect,
-  authorize("admin"),
-  getStudentById
-);
+router.get("/:id", protect, authorize("admin"), getStudentById);
 
-router.put(
-  "/:id",
-  protect,
-  authorize("admin"),
-  updateStudent
-);
+router.put("/:id", protect, authorize("admin"), updateStudent);
 
-router.delete(
-  "/:id",
-  protect,
-  authorize("admin"),
-  deleteStudent
-);
+router.delete("/:id", protect, authorize("admin"), deleteStudent);
 
 module.exports = router;
