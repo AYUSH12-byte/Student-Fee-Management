@@ -2,12 +2,6 @@ const mongoose = require("mongoose");
 
 const receiptSchema = new mongoose.Schema(
   {
-    receiptNumber: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
     paymentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Payment",
@@ -15,48 +9,15 @@ const receiptSchema = new mongoose.Schema(
       unique: true,
     },
 
-    studentFeeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "StudentFee",
-      required: true,
-    },
-
-    studentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Student",
-      required: true,
-    },
-
-    amountPaid: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    paymentMethod: {
+    receiptNumber: {
       type: String,
       required: true,
+      unique: true,
     },
 
-    paymentDate: {
+    generatedAt: {
       type: Date,
-      required: true,
-    },
-
-    previousPaidAmount: {
-      type: Number,
-      required: true,
-    },
-
-    remainingDue: {
-      type: Number,
-      required: true,
-    },
-
-    generatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      default: Date.now,
     },
   },
   {
