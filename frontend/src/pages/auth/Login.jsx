@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -34,11 +36,7 @@ function Login() {
 
       const { token, user } = response.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(user)
-      );
+      login(token, user);
 
       if (user.role === "admin") {
         navigate("/admin/dashboard");
