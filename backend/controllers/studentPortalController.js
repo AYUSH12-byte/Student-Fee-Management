@@ -3,10 +3,33 @@ const StudentFee = require("../models/StudentFee");
 const Payment = require("../models/Payment");
 const Receipt = require("../models/Receipt");
 
-// GET MY FEE STATUS
-const getMyFeeStatus = async (req, res) => {
+// GET MY PROFILE
+const getMyProfile = async (req, res) => {
   try {
-    // req.user.id comes from JWT authentication
+    const student = await Student.findOne({
+      userId: req.user.id,
+    }).populate("userId", "name email role");
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student profile not found",
+      });
+    }
+
+    res.status(200).json({
+      student,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch profile",
+      error: error.message,
+    });
+  }
+};
+
+// GET MY FEES
+const getMyFees = async (req, res) => {
+  try {
     const student = await Student.findOne({
       userId: req.user.id,
     });
@@ -17,60 +40,36 @@ const getMyFeeStatus = async (req, res) => {
       });
     }
 
-    const studentFees = await StudentFee.find({
+    const fees = await StudentFee.find({
       studentId: student._id,
     })
       .populate("feeStructureId")
       .sort({ createdAt: -1 });
 
-    if (studentFees.length === 0) {
-      return res.status(200).json({
-        message: "No fee records found",
-        student,
-        summary: {
-          totalAmount: 0,
-          paidAmount: 0,
-          dueAmount: 0,
-        },
-        fees: [],
-      });
-    }
+    // Calculate totals
+    const totalAmount = fees.reduce((sum, fee) => sum + fee.totalAmount, 0);
 
-    const totalAmount = studentFees.reduce(
-      (sum, fee) => sum + fee.totalAmount,
-      0
-    );
+    const paidAmount = fees.reduce((sum, fee) => sum + fee.paidAmount, 0);
 
-    const paidAmount = studentFees.reduce(
-      (sum, fee) => sum + fee.paidAmount,
-      0
-    );
-
-    const dueAmount = studentFees.reduce(
-      (sum, fee) => sum + fee.dueAmount,
-      0
-    );
+    const dueAmount = fees.reduce((sum, fee) => sum + fee.dueAmount, 0);
 
     res.status(200).json({
-      student,
-
       summary: {
         totalAmount,
         paidAmount,
         dueAmount,
       },
-
-      fees: studentFees,
+      fees,
     });
   } catch (error) {
     res.status(500).json({
-      message: "Failed to fetch fee status",
+      message: "Failed to fetch fees",
       error: error.message,
     });
   }
 };
 
-// GET MY PAYMENT HISTORY
+// GET MY PAYMENTS
 const getMyPayments = async (req, res) => {
   try {
     const student = await Student.findOne({
@@ -87,21 +86,12 @@ const getMyPayments = async (req, res) => {
       studentId: student._id,
     }).select("_id");
 
-    const studentFeeIds = studentFees.map(
-      (fee) => fee._id
-    );
+    const studentFeeIds = studentFees.map((fee) => fee._id);
 
     const payments = await Payment.find({
-      studentFeeId: {
-        $in: studentFeeIds,
-      },
+      studentFeeId: { $in: studentFeeIds },
     })
-      .populate({
-        path: "studentFeeId",
-        populate: {
-          path: "feeStructureId",
-        },
-      })
+      .populate("studentFeeId", "totalAmount paidAmount dueAmount status")
       .sort({ paymentDate: -1 });
 
     res.status(200).json({
@@ -129,12 +119,23 @@ const getMyReceipts = async (req, res) => {
       });
     }
 
-    const receipts = await Receipt.find({
+    const studentFees = await StudentFee.find({
       studentId: student._id,
+    }).select("_id");
+
+    const studentFeeIds = studentFees.map((fee) => fee._id);
+
+    const payments = await Payment.find({
+      studentFeeId: { $in: studentFeeIds },
+    }).select("_id");
+
+    const paymentIds = payments.map((payment) => payment._id);
+
+    const receipts = await Receipt.find({
+      paymentId: { $in: paymentIds },
     })
       .populate("paymentId")
-      .populate("studentFeeId")
-      .sort({ paymentDate: -1 });
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       count: receipts.length,
@@ -148,46 +149,9 @@ const getMyReceipts = async (req, res) => {
   }
 };
 
-// GET SINGLE RECEIPT
-const getMyReceiptById = async (req, res) => {
-  try {
-    const student = await Student.findOne({
-      userId: req.user.id,
-    });
-
-    if (!student) {
-      return res.status(404).json({
-        message: "Student profile not found",
-      });
-    }
-
-    const receipt = await Receipt.findOne({
-      _id: req.params.id,
-      studentId: student._id,
-    })
-      .populate("paymentId")
-      .populate("studentFeeId");
-
-    if (!receipt) {
-      return res.status(404).json({
-        message: "Receipt not found",
-      });
-    }
-
-    res.status(200).json({
-      receipt,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch receipt",
-      error: error.message,
-    });
-  }
-};
-
 module.exports = {
-  getMyFeeStatus,
+  getMyProfile,
+  getMyFees,
   getMyPayments,
   getMyReceipts,
-  getMyReceiptById,
 };
