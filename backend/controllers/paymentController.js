@@ -1,5 +1,6 @@
 const Payment = require("../models/Payment");
 const StudentFee = require("../models/StudentFee");
+const Receipt = require("../models/Receipt");
 
 // CREATE PAYMENT
 const createPayment = async (req, res) => {
@@ -13,6 +14,7 @@ const createPayment = async (req, res) => {
       remarks,
     } = req.body;
 
+    // Validate required fields
     if (!studentFeeId || amount === undefined) {
       return res.status(400).json({
         message: "Student fee ID and payment amount are required",
@@ -21,7 +23,8 @@ const createPayment = async (req, res) => {
 
     const paymentAmount = Number(amount);
 
-    if (paymentAmount <= 0) {
+    // Validate payment amount
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
       return res.status(400).json({
         message: "Payment amount must be greater than 0",
       });
@@ -50,6 +53,9 @@ const createPayment = async (req, res) => {
       });
     }
 
+    // Save previous paid amount for receipt
+    const previousPaidAmount = studentFee.paidAmount;
+
     // Create payment
     const payment = await Payment.create({
       studentFeeId,
@@ -64,8 +70,9 @@ const createPayment = async (req, res) => {
     // Update paid amount
     studentFee.paidAmount += paymentAmount;
 
-    // Calculate due amount
-    studentFee.dueAmount = studentFee.totalAmount - studentFee.paidAmount;
+    // Calculate remaining due
+    studentFee.dueAmount =
+      studentFee.totalAmount - studentFee.paidAmount;
 
     // Update status
     if (studentFee.dueAmount === 0) {
@@ -76,7 +83,24 @@ const createPayment = async (req, res) => {
 
     await studentFee.save();
 
-    // Return payment with related information
+    // Generate receipt number
+    const receiptNumber = `REC-${new Date().getFullYear()}-${Date.now()}`;
+
+    // Create receipt automatically
+    const receipt = await Receipt.create({
+      receiptNumber,
+      paymentId: payment._id,
+      studentFeeId: studentFee._id,
+      studentId: studentFee.studentId,
+      amountPaid: paymentAmount,
+      paymentMethod: payment.paymentMethod,
+      paymentDate: payment.paymentDate,
+      previousPaidAmount,
+      remainingDue: studentFee.dueAmount,
+      generatedBy: req.user.id,
+    });
+
+    // Get populated payment
     const populatedPayment = await Payment.findById(payment._id)
       .populate({
         path: "studentFeeId",
@@ -91,9 +115,21 @@ const createPayment = async (req, res) => {
       })
       .populate("recordedBy", "name email");
 
+    // Get populated receipt
+    const populatedReceipt = await Receipt.findById(receipt._id)
+      .populate("studentId")
+      .populate("generatedBy", "name email")
+      .populate("paymentId")
+      .populate("studentFeeId");
+
+    // Response
     res.status(201).json({
-      message: "Payment recorded successfully",
+      message: "Payment recorded and receipt generated successfully",
+
       payment: populatedPayment,
+
+      receipt: populatedReceipt,
+
       feeStatus: {
         totalAmount: studentFee.totalAmount,
         paidAmount: studentFee.paidAmount,
@@ -102,6 +138,8 @@ const createPayment = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Payment Error:", error);
+
     res.status(500).json({
       message: "Failed to record payment",
       error: error.message,
@@ -115,9 +153,14 @@ const getPayments = async (req, res) => {
     const payments = await Payment.find()
       .populate({
         path: "studentFeeId",
-        populate: {
-          path: "studentId",
-        },
+        populate: [
+          {
+            path: "studentId",
+          },
+          {
+            path: "feeStructureId",
+          },
+        ],
       })
       .populate("recordedBy", "name email")
       .sort({ createdAt: -1 });
