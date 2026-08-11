@@ -2,8 +2,7 @@ const Receipt = require("../models/Receipt");
 const Payment = require("../models/Payment");
 
 const PDFDocument = require("pdfkit");
-const Receipt = require("../models/Receipt");
-const Payment = require("../models/Payment");
+
 
 // Generate unique receipt number
 const generateReceiptNumber = async () => {
