@@ -1,8 +1,13 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import Login from "./pages/auth/Login";
-
 import Dashboard from "./pages/admin/Dashboard";
+import Students from "./pages/admin/Students";
 
 import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -14,13 +19,33 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Default */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* Login */}
-          <Route path="/login" element={<Login />} />
+          {/* =========================
+              DEFAULT
+          ========================== */}
 
-          {/* ADMIN ROUTES */}
+          <Route
+            path="/"
+            element={
+              <Navigate
+                to="/login"
+                replace
+              />
+            }
+          />
+
+          {/* =========================
+              LOGIN
+          ========================== */}
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          {/* =========================
+              ADMIN ROUTES
+          ========================== */}
 
           <Route
             path="/admin"
@@ -30,26 +55,61 @@ function App() {
               </ProtectedRoute>
             }
           >
+
             {/* /admin → /admin/dashboard */}
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route
+              index
+              element={
+                <Navigate
+                  to="/admin/dashboard"
+                  replace
+                />
+              }
+            />
 
             {/* Dashboard */}
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route
+              path="dashboard"
+              element={<Dashboard />}
+            />
+
+            {/* Students */}
+            <Route
+              path="students"
+              element={<Students />}
+            />
+
           </Route>
 
-          {/*STUDENT ROUTE - TEMPORARY*/}
+          {/* =========================
+              STUDENT ROUTES
+          ========================== */}
 
           <Route
             path="/student/dashboard"
             element={
               <ProtectedRoute role="student">
-                <h1 className="p-8 text-3xl font-bold">Student Dashboard</h1>
+                <h1 className="p-8 text-3xl font-bold">
+                  Student Dashboard
+                </h1>
               </ProtectedRoute>
             }
           />
 
-          {/* Invalid URL */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* =========================
+              INVALID URL
+          ========================== */}
+
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/login"
+                replace
+              />
+            }
+          />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
