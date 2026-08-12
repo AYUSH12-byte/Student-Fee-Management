@@ -12,7 +12,7 @@ import StudentFees from "./pages/admin/StudentFees";
 import AddStudentFee from "./pages/admin/AddStudentFee";
 import Payments from "./pages/admin/Payments";
 import AddPayment from "./pages/admin/AddPayment";
-
+import Receipts from "./pages/admin/Receipts";
 
 import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -83,6 +83,10 @@ function App() {
           
            {/* Add Payment */}
            <Route path="payments/add" element={<AddPayment />}/>
+
+            {/* Receipts */}
+            <Route path="receipts"element={<Receipts />}/>
+
           </Route>
 
           {/* =========================
