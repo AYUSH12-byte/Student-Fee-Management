@@ -14,6 +14,8 @@ import Payments from "./pages/admin/Payments";
 import AddPayment from "./pages/admin/AddPayment";
 import Receipts from "./pages/admin/Receipts";
 
+import StudentDashboard from "./pages/student/StudentDashboard";
+
 import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -93,14 +95,7 @@ function App() {
               STUDENT ROUTES
           ========================== */}
 
-          <Route
-            path="/student/dashboard"
-            element={
-              <ProtectedRoute role="student">
-                <h1 className="p-8 text-3xl font-bold">Student Dashboard</h1>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/student/dashboard" element={ <ProtectedRoute role="student"> <StudentDashboard /> </ProtectedRoute> }/>
 
           {/* =========================
               INVALID URL
