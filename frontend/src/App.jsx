@@ -73,7 +73,7 @@ function App() {
            {/* Student Fees */}
            <Route path="student-fees"element={<StudentFees />}/>
 
-             {/* Add Student Fees */}
+            {/* Add Student Fees */}
            <Route path="student-fees/add"element={<AddStudentFee />}/>
 
           </Route>
