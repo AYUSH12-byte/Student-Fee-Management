@@ -7,7 +7,7 @@ import AddStudent from "./pages/admin/AddStudent";
 import EditStudent from "./pages/admin/EditStudent";
 import FeeStructures from "./pages/admin/FeeStructures";
 import AddFeeStructure from "./pages/admin/AddFeeStructure";
-
+import EditFeeStructure from "./pages/admin/EditFeeStructure";
 
 
 import AdminLayout from "./components/AdminLayout";
@@ -64,6 +64,10 @@ function App() {
 
             {/* Add Fee Structures */}
             <Route path="fee-structures/add"element={<AddFeeStructure />}/>
+
+            {/* Edit Fee Structures */}
+           <Route path="fee-structures/edit/:id"element={<EditFeeStructure />}/>
+
           </Route>
 
           {/* =========================
