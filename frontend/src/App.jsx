@@ -4,6 +4,9 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/admin/Dashboard";
 import Students from "./pages/admin/Students";
 import AddStudent from "./pages/admin/AddStudent";
+import EditStudent from "./pages/admin/EditStudent";
+
+
 
 import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -50,6 +53,10 @@ function App() {
             
             {/* Add Students */}
             <Route path="students/add" element={<AddStudent />} />
+             
+            {/* Edit Students */}
+            <Route path="students/edit/:id"element={<EditStudent />}/>
+
           </Route>
 
           {/* =========================
