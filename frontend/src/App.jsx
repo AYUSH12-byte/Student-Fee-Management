@@ -9,6 +9,7 @@ import FeeStructures from "./pages/admin/FeeStructures";
 import AddFeeStructure from "./pages/admin/AddFeeStructure";
 import EditFeeStructure from "./pages/admin/EditFeeStructure";
 import StudentFees from "./pages/admin/StudentFees";
+import AddStudentFee from "./pages/admin/AddStudentFee";
 
 
 import AdminLayout from "./components/AdminLayout";
@@ -71,6 +72,9 @@ function App() {
 
            {/* Student Fees */}
            <Route path="student-fees"element={<StudentFees />}/>
+
+             {/* Add Student Fees */}
+           <Route path="student-fees/add"element={<AddStudentFee />}/>
 
           </Route>
 
