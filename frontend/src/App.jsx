@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+                // Admin
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/admin/Dashboard";
 import Students from "./pages/admin/Students";
@@ -14,10 +15,12 @@ import Payments from "./pages/admin/Payments";
 import AddPayment from "./pages/admin/AddPayment";
 import Receipts from "./pages/admin/Receipts";
 
-//  import StudentDashboard from "./pages/student/StudentDashboard";
+                //  student
 import StudentDashboard from "./pages/student/Dashboard";
 import MyFees from "./pages/student/MyFees";
 import StudentPayments from "./pages/student/Payments";
+import StudentReceipts from "./pages/student/Receipts";
+
 
 import AdminLayout from "./components/AdminLayout";
 import StudentLayout from "./components/StudentLayout";
@@ -40,14 +43,7 @@ function App() {
 
           {/* ADMIN ROUTES*/}
 
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute role="admin">
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
+          <Route path="/admin" element={<ProtectedRoute role="admin"><AdminLayout /></ProtectedRoute>} >
             {/* /admin → /admin/dashboard */}
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
 
@@ -107,11 +103,8 @@ function App() {
           {/* Payments */}  
             <Route path="payments" element={<StudentPayments />} />
            
-           
-            <Route
-              path="receipts"
-              element={<h1 className="text-3xl font-bold">Receipts</h1>}
-            />
+           {/* Receipts */}  
+            <Route path="receipts"element={<StudentReceipts />}/>
           </Route>
 
           {/* INVALID URL */}
