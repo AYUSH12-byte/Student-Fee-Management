@@ -107,12 +107,12 @@ function Receipts() {
           </p>
         </div>
 
-        <Link
+        {/* <Link
           to="/admin/payments/add"
           className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
         >
           + Record Payment
-        </Link>
+        </Link> */}
       </div>
 
       {/* Error */}
