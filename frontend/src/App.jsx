@@ -16,8 +16,8 @@ import Receipts from "./pages/admin/Receipts";
 
 
 //  import StudentDashboard from "./pages/student/StudentDashboard";
-// import MyFees from "./pages/student/MyFees";
 import StudentDashboard from "./pages/student/Dashboard";
+import MyFees from "./pages/student/MyFees";
 
 
 
@@ -125,13 +125,9 @@ function App() {
   />
 
   <Route
-    path="fees"
-    element={
-      <h1 className="text-3xl font-bold">
-        My Fees
-      </h1>
-    }
-  />
+  path="fees"
+  element={<MyFees />}
+/>
 
   <Route
     path="payments"
