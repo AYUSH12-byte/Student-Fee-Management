@@ -62,7 +62,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200">
+      {/* <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
@@ -89,7 +89,7 @@ function Dashboard() {
             </button>
           </div>
         </div>
-      </nav>
+      </nav> */}
 
       {/* Main */}
       <main className="max-w-7xl mx-auto px-6 py-8">
