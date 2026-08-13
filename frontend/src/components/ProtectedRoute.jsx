@@ -5,17 +5,17 @@ function ProtectedRoute({ children, role }) {
   const { user, isAuthenticated } = useAuth();
 
   // Not logged in
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
   // Wrong role
-  if (role && user.role !== role) {
-    if (user.role === "admin") {
+  if (role && user?.role !== role) {
+    if (user?.role === "admin") {
       return <Navigate to="/admin/dashboard" replace />;
     }
 
-    if (user.role === "student") {
+    if (user?.role === "student") {
       return <Navigate to="/student/dashboard" replace />;
     }
 

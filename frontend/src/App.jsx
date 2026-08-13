@@ -14,9 +14,15 @@ import Payments from "./pages/admin/Payments";
 import AddPayment from "./pages/admin/AddPayment";
 import Receipts from "./pages/admin/Receipts";
 
-import StudentDashboard from "./pages/student/StudentDashboard";
+
+//  import StudentDashboard from "./pages/student/StudentDashboard";
+// import MyFees from "./pages/student/MyFees";
+import StudentDashboard from "./pages/student/Dashboard";
+
+
 
 import AdminLayout from "./components/AdminLayout";
+import StudentLayout from "./components/StudentLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import { AuthProvider } from "./context/AuthContext";
@@ -94,9 +100,57 @@ function App() {
           {/* =========================
               STUDENT ROUTES
           ========================== */}
+           
+<Route
+  path="/student"
+  element={
+    <ProtectedRoute role="student">
+      <StudentLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route
+    index
+    element={
+      <Navigate
+        to="/student/dashboard"
+        replace
+      />
+    }
+  />
 
-          <Route path="/student/dashboard" element={ <ProtectedRoute role="student"> <StudentDashboard /> </ProtectedRoute> }/>
+  <Route
+    path="dashboard"
+    element={<StudentDashboard />}
+  />
 
+  <Route
+    path="fees"
+    element={
+      <h1 className="text-3xl font-bold">
+        My Fees
+      </h1>
+    }
+  />
+
+  <Route
+    path="payments"
+    element={
+      <h1 className="text-3xl font-bold">
+        Payment History
+      </h1>
+    }
+  />
+
+  <Route
+    path="receipts"
+    element={
+      <h1 className="text-3xl font-bold">
+        Receipts
+      </h1>
+    }
+  />
+</Route>
           {/* =========================
               INVALID URL
           ========================== */}
