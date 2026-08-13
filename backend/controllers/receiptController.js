@@ -2,7 +2,9 @@ const Receipt = require("../models/Receipt");
 const Payment = require("../models/Payment");
 const PDFDocument = require("pdfkit");
 
+// ======================================================
 // GENERATE UNIQUE RECEIPT NUMBER
+// ======================================================
 
 const generateReceiptNumber = async () => {
   const year = new Date().getFullYear();
@@ -14,7 +16,9 @@ const generateReceiptNumber = async () => {
   return `REC-${year}-${number}`;
 };
 
+// ======================================================
 // CREATE RECEIPT
+// ======================================================
 
 const createReceipt = async (req, res) => {
   try {
@@ -34,7 +38,6 @@ const createReceipt = async (req, res) => {
       });
     }
 
-    // Check if receipt already exists
     const existingReceipt = await Receipt.findOne({
       paymentId,
     });
@@ -82,7 +85,9 @@ const createReceipt = async (req, res) => {
   }
 };
 
+// ======================================================
 // GET ALL RECEIPTS
+// ======================================================
 
 const getReceipts = async (req, res) => {
   try {
@@ -117,7 +122,9 @@ const getReceipts = async (req, res) => {
   }
 };
 
+// ======================================================
 // GET SINGLE RECEIPT
+// ======================================================
 
 const getReceiptById = async (req, res) => {
   try {
@@ -155,7 +162,9 @@ const getReceiptById = async (req, res) => {
   }
 };
 
+// ======================================================
 // GET RECEIPT BY PAYMENT
+// ======================================================
 
 const getReceiptByPayment = async (req, res) => {
   try {
@@ -195,11 +204,15 @@ const getReceiptByPayment = async (req, res) => {
   }
 };
 
-// DOWNLOAD RECEIPT PDF
+// ======================================================
+// DOWNLOAD PROFESSIONAL SCHOOL RECEIPT PDF
+// ======================================================
 
 const downloadReceiptPDF = async (req, res) => {
   try {
+    // --------------------------------------------------
     // GET RECEIPT
+    // --------------------------------------------------
 
     const receipt = await Receipt.findById(req.params.id).populate({
       path: "paymentId",
@@ -222,18 +235,22 @@ const downloadReceiptPDF = async (req, res) => {
       });
     }
 
+    // --------------------------------------------------
     // DATA
+    // --------------------------------------------------
 
     const payment = receipt.paymentId;
-    const studentFee = payment.studentFeeId;
-    const student = studentFee.studentId;
-    const feeStructure = studentFee.feeStructureId;
+    const studentFee = payment?.studentFeeId;
+    const student = studentFee?.studentId;
+    const feeStructure = studentFee?.feeStructureId;
 
+    // --------------------------------------------------
     // PDF SETUP
+    // --------------------------------------------------
 
     const doc = new PDFDocument({
       size: "A4",
-      margin: 35,
+      margin: 0,
       autoFirstPage: true,
     });
 
@@ -246,283 +263,89 @@ const downloadReceiptPDF = async (req, res) => {
 
     doc.pipe(res);
 
-    const pageWidth = 595.28;
-    const pageHeight = 841.89;
+    // A4 dimensions in points
+    const PAGE_WIDTH = 595.28;
+    const PAGE_HEIGHT = 841.89;
 
-    const left = 35;
-    const right = pageWidth - 35;
-    const width = right - left;
+    const MARGIN = 30;
 
+    const LEFT = MARGIN;
+    const RIGHT = PAGE_WIDTH - MARGIN;
+    const CONTENT_WIDTH = RIGHT - LEFT;
+
+    // --------------------------------------------------
     // HELPER FUNCTIONS
+    // --------------------------------------------------
 
-    const drawBox = (x, y, w, h) => {
-      doc.rect(x, y, w, h).lineWidth(0.8).stroke();
+    const money = (value) => {
+      return `Rs. ${Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
     };
 
-    const drawLine = (x1, y1, x2, y2) => {
-      doc.moveTo(x1, y1).lineTo(x2, y2).lineWidth(0.7).stroke();
+    const dateFormat = (value) => {
+      if (!value) return "N/A";
+
+      return new Date(value).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
     };
 
-    const sectionTitle = (title, y) => {
-      doc.font("Helvetica-Bold").fontSize(11).text(title, left, y);
-
-      return y + 18;
+    const drawRect = (x, y, width, height, lineWidth = 0.8) => {
+      doc.lineWidth(lineWidth).rect(x, y, width, height).stroke();
     };
 
-    const labelValue = (label, value, x, y, labelWidth = 90) => {
-      doc.font("Helvetica-Bold").fontSize(9).text(label, x, y, {
+    const drawLine = (x1, y1, x2, y2, lineWidth = 0.8) => {
+      doc.lineWidth(lineWidth).moveTo(x1, y1).lineTo(x2, y2).stroke();
+    };
+
+    const sectionHeader = (title, y) => {
+      doc.font("Helvetica-Bold").fontSize(10).text(title, LEFT, y);
+
+      drawLine(LEFT, y + 15, RIGHT, y + 15, 0.6);
+
+      return y + 24;
+    };
+
+    const field = (label, value, x, y, labelWidth = 75, valueWidth = 190) => {
+      doc.font("Helvetica-Bold").fontSize(8.5).text(label, x, y, {
         width: labelWidth,
       });
 
       doc
         .font("Helvetica")
-        .fontSize(9)
-        .text(value || "N/A", x + labelWidth, y);
+        .fontSize(8.5)
+        .text(value || "N/A", x + labelWidth, y, {
+          width: valueWidth,
+        });
     };
 
+    // --------------------------------------------------
     // OUTER BORDER
+    // --------------------------------------------------
 
-    drawBox(20, 20, pageWidth - 40, pageHeight - 40);
+    drawRect(18, 18, PAGE_WIDTH - 36, PAGE_HEIGHT - 36, 1.2);
 
+    // --------------------------------------------------
     // SCHOOL HEADER
+    // --------------------------------------------------
 
     doc
       .font("Helvetica-Bold")
-      .fontSize(19)
-      .text("STUDENT FEE MANAGEMENT SYSTEM", left, 42, {
-        width,
+      .fontSize(20)
+      .text("STUDENT FEE MANAGEMENT SYSTEM", LEFT, 38, {
+        width: CONTENT_WIDTH,
         align: "center",
       });
-
-    doc
-      .font("Helvetica")
-      .fontSize(9)
-      .text("SCHOOL FEE COLLECTION RECEIPT", left, 68, {
-        width,
-        align: "center",
-      });
-
-    drawLine(left, 88, right, 88);
-
-    // RECEIPT INFORMATION
-
-    let y = 100;
-
-    drawBox(left, y, width, 48);
-
-    labelValue("Receipt No:", receipt.receiptNumber, left + 10, y + 10, 75);
-
-    labelValue(
-      "Payment Date:",
-      new Date(payment.paymentDate).toLocaleDateString(),
-      310,
-      y + 10,
-      80,
-    );
-
-    labelValue(
-      "Payment Method:",
-      payment.paymentMethod || "Cash",
-      left + 10,
-      y + 30,
-      90,
-    );
-
-    labelValue(
-      "Transaction No:",
-      payment.transactionNumber || "N/A",
-      310,
-      y + 30,
-      85,
-    );
-
-    y += 62;
-
-    // STUDENT INFORMATION
-
-    y = sectionTitle("STUDENT INFORMATION", y);
-
-    drawBox(left, y, width, 72);
-
-    labelValue(
-      "Student ID:",
-      student?.studentId || "N/A",
-      left + 10,
-      y + 12,
-      75,
-    );
-
-    labelValue("Student Name:", student?.name || "N/A", 310, y + 12, 80);
-
-    labelValue("Class:", student?.class || "N/A", left + 10, y + 35, 75);
-
-    labelValue("Section:", student?.section || "N/A", 310, y + 35, 80);
-
-    labelValue("Email:", student?.email || "N/A", left + 10, y + 56, 75);
-
-    y += 86;
-
-    // FEE DETAILS
-
-    y = sectionTitle("FEE DETAILS", y);
-
-    const feeTableY = y;
-
-    // Table height
-    const feeTableHeight = 112;
-
-    drawBox(left, feeTableY, width, feeTableHeight);
-
-    // Column positions
-    const col1 = left;
-    const col2 = 355;
-    const col3 = right;
-
-    // Header
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(9)
-      .text("FEE DESCRIPTION", col1 + 10, feeTableY + 9);
-
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(9)
-      .text("AMOUNT (Rs.)", col2 + 10, feeTableY + 9);
-
-    drawLine(col1, feeTableY + 27, col3, feeTableY + 27);
-
-    // Tuition
-    doc
-      .font("Helvetica")
-      .fontSize(9)
-      .text("Tuition Fee", col1 + 10, feeTableY + 38);
-
-    doc.text(
-      Number(feeStructure?.tuitionFee || 0).toFixed(2),
-      col2 + 10,
-      feeTableY + 38,
-    );
-
-    // Transport
-    doc.text("Transport Fee", col1 + 10, feeTableY + 56);
-
-    doc.text(
-      Number(feeStructure?.transportFee || 0).toFixed(2),
-      col2 + 10,
-      feeTableY + 56,
-    );
-
-    // Examination
-    doc.text("Examination Fee", col1 + 10, feeTableY + 74);
-
-    doc.text(
-      Number(feeStructure?.examFee || 0).toFixed(2),
-      col2 + 10,
-      feeTableY + 74,
-    );
-
-    // Total
-    drawLine(col1, feeTableY + 92, col3, feeTableY + 92);
-
-    doc.font("Helvetica-Bold").text("TOTAL FEE", col1 + 10, feeTableY + 98);
-
-    doc
-      .font("Helvetica-Bold")
-      .text(
-        `Rs. ${Number(studentFee.totalAmount || 0).toFixed(2)}`,
-        col2 + 10,
-        feeTableY + 98,
-      );
-
-    y = feeTableY + feeTableHeight + 18;
-
-    // PAYMENT DETAILS
-
-    y = sectionTitle("PAYMENT DETAILS", y);
-
-    const paymentBoxY = y;
-
-    drawBox(left, paymentBoxY, width, 65);
-
-    labelValue(
-      "Amount Paid:",
-      `Rs. ${Number(payment.amount || 0).toFixed(2)}`,
-      left + 10,
-      paymentBoxY + 12,
-      80,
-    );
-
-    labelValue(
-      "Payment Method:",
-      payment.paymentMethod || "Cash",
-      310,
-      paymentBoxY + 12,
-      90,
-    );
-
-    labelValue(
-      "Transaction No:",
-      payment.transactionNumber || "N/A",
-      left + 10,
-      paymentBoxY + 38,
-      90,
-    );
-
-    labelValue("Remarks:", payment.remarks || "N/A", 310, paymentBoxY + 38, 55);
-
-    y = paymentBoxY + 80;
-
-    // FEE SUMMARY
-
-    y = sectionTitle("FEE SUMMARY", y);
-
-    const summaryY = y;
-
-    drawBox(left, summaryY, width, 78);
-
-    // Row 1
-    labelValue(
-      "Total Fee:",
-      `Rs. ${Number(studentFee.totalAmount || 0).toFixed(2)}`,
-      left + 12,
-      summaryY + 13,
-      80,
-    );
-
-    labelValue(
-      "Total Paid:",
-      `Rs. ${Number(studentFee.paidAmount || 0).toFixed(2)}`,
-      310,
-      summaryY + 13,
-      75,
-    );
-
-    // Row 2
-    labelValue(
-      "Remaining Due:",
-      `Rs. ${Number(studentFee.dueAmount || 0).toFixed(2)}`,
-      left + 12,
-      summaryY + 42,
-      90,
-    );
-
-    labelValue(
-      "Status:",
-      String(studentFee.status || "Pending").toUpperCase(),
-      310,
-      summaryY + 42,
-      50,
-    );
-
-    y = summaryY + 95;
-
-    // THANK YOU MESSAGE
 
     doc
       .font("Helvetica-Bold")
       .fontSize(10)
-      .text("Thank you for your payment.", left, y, {
-        width,
+      .text("SCHOOL / EDUCATIONAL INSTITUTION", LEFT, 64, {
+        width: CONTENT_WIDTH,
         align: "center",
       });
 
@@ -530,36 +353,392 @@ const downloadReceiptPDF = async (req, res) => {
       .font("Helvetica")
       .fontSize(8)
       .text(
-        "This is a computer-generated receipt and does not require a signature.",
-        left,
-        y + 17,
+        "Address, Nepal  |  Phone: +977-XXXXXXXXXX  |  Email: school@example.com",
+        LEFT,
+        80,
         {
-          width,
+          width: CONTENT_WIDTH,
           align: "center",
         },
       );
 
-    // FOOTER
+    // --------------------------------------------------
+    // RECEIPT TITLE
+    // --------------------------------------------------
+
+    drawLine(LEFT, 98, RIGHT, 98, 1);
 
     doc
+      .font("Helvetica-Bold")
+      .fontSize(14)
+      .text("OFFICIAL FEE PAYMENT RECEIPT", LEFT, 108, {
+        width: CONTENT_WIDTH,
+        align: "center",
+      });
+
+    doc.font("Helvetica").fontSize(7.5).text("Original Receipt", LEFT, 126, {
+      width: CONTENT_WIDTH,
+      align: "center",
+    });
+
+    // --------------------------------------------------
+    // RECEIPT META
+    // --------------------------------------------------
+
+    const metaY = 143;
+    const metaH = 52;
+
+    drawRect(LEFT, metaY, CONTENT_WIDTH, metaH);
+
+    field("Receipt No:", receipt.receiptNumber, LEFT + 10, metaY + 10, 68, 150);
+
+    field(
+      "Payment Date:",
+      dateFormat(payment?.paymentDate),
+      320,
+      metaY + 10,
+      75,
+      150,
+    );
+
+    field(
+      "Payment Method:",
+      payment?.paymentMethod || "Cash",
+      LEFT + 10,
+      metaY + 31,
+      85,
+      150,
+    );
+
+    field(
+      "Transaction No:",
+      payment?.transactionNumber || "N/A",
+      320,
+      metaY + 31,
+      85,
+      150,
+    );
+
+    // --------------------------------------------------
+    // STUDENT INFORMATION
+    // --------------------------------------------------
+
+    let y = 213;
+
+    y = sectionHeader("STUDENT INFORMATION", y);
+
+    const studentBoxY = y;
+    const studentBoxH = 78;
+
+    drawRect(LEFT, studentBoxY, CONTENT_WIDTH, studentBoxH);
+
+    field(
+      "Student ID:",
+      student?.studentId,
+      LEFT + 10,
+      studentBoxY + 12,
+      70,
+      180,
+    );
+
+    field("Student Name:", student?.name, 320, studentBoxY + 12, 75, 170);
+
+    field("Class:", student?.class, LEFT + 10, studentBoxY + 34, 70, 180);
+
+    field("Section:", student?.section, 320, studentBoxY + 34, 55, 170);
+
+    field("Email:", student?.email, LEFT + 10, studentBoxY + 56, 70, 180);
+
+    field("Phone:", student?.phone, 320, studentBoxY + 56, 55, 170);
+
+    y = studentBoxY + studentBoxH + 18;
+
+    // --------------------------------------------------
+    // FEE DETAILS
+    // --------------------------------------------------
+
+    y = sectionHeader("FEE DETAILS", y);
+
+    const tableY = y;
+    const tableH = 132;
+
+    drawRect(LEFT, tableY, CONTENT_WIDTH, tableH);
+
+    // Column divider
+    const amountX = 430;
+
+    drawLine(amountX, tableY, amountX, tableY + tableH);
+
+    // Header
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(8.5)
+      .text("FEE DESCRIPTION", LEFT + 12, tableY + 10);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(8.5)
+      .text("AMOUNT (Rs.)", amountX + 12, tableY + 10);
+
+    drawLine(LEFT, tableY + 28, RIGHT, tableY + 28);
+
+    // Tuition
+    doc
+      .font("Helvetica")
+      .fontSize(9)
+      .text("Tuition Fee", LEFT + 12, tableY + 42);
+
+    doc.text(
+      Number(feeStructure?.tuitionFee || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+      }),
+      amountX + 12,
+      tableY + 42,
+    );
+
+    // Transport
+    doc.text("Transport Fee", LEFT + 12, tableY + 62);
+
+    doc.text(
+      Number(feeStructure?.transportFee || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+      }),
+      amountX + 12,
+      tableY + 62,
+    );
+
+    // Exam
+    doc.text("Examination Fee", LEFT + 12, tableY + 82);
+
+    doc.text(
+      Number(feeStructure?.examFee || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+      }),
+      amountX + 12,
+      tableY + 82,
+    );
+
+    // Total
+    drawLine(LEFT, tableY + 101, RIGHT, tableY + 101);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .text("TOTAL FEE", LEFT + 12, tableY + 111);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .text(
+        Number(studentFee?.totalAmount || 0).toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+        }),
+        amountX + 12,
+        tableY + 111,
+      );
+
+    y = tableY + tableH + 18;
+
+    // --------------------------------------------------
+    // PAYMENT DETAILS
+    // --------------------------------------------------
+
+    y = sectionHeader("PAYMENT DETAILS", y);
+
+    const paymentBoxY = y;
+    const paymentBoxH = 62;
+
+    drawRect(LEFT, paymentBoxY, CONTENT_WIDTH, paymentBoxH);
+
+    field(
+      "Amount Paid:",
+      money(payment?.amount),
+      LEFT + 10,
+      paymentBoxY + 12,
+      75,
+      180,
+    );
+
+    field(
+      "Payment Method:",
+      payment?.paymentMethod || "Cash",
+      320,
+      paymentBoxY + 12,
+      85,
+      160,
+    );
+
+    field(
+      "Transaction No:",
+      payment?.transactionNumber || "N/A",
+      LEFT + 10,
+      paymentBoxY + 36,
+      85,
+      180,
+    );
+
+    field(
+      "Remarks:",
+      payment?.remarks || "N/A",
+      320,
+      paymentBoxY + 36,
+      55,
+      160,
+    );
+
+    y = paymentBoxY + paymentBoxH + 18;
+
+    // --------------------------------------------------
+    // PAYMENT SUMMARY
+    // --------------------------------------------------
+
+    y = sectionHeader("PAYMENT SUMMARY", y);
+
+    const summaryY = y;
+    const summaryH = 74;
+
+    drawRect(LEFT, summaryY, CONTENT_WIDTH, summaryH);
+
+    field(
+      "Total Fee:",
+      money(studentFee?.totalAmount),
+      LEFT + 12,
+      summaryY + 12,
+      65,
+      180,
+    );
+
+    field(
+      "Total Paid:",
+      money(studentFee?.paidAmount),
+      320,
+      summaryY + 12,
+      65,
+      170,
+    );
+
+    field(
+      "Remaining Due:",
+      money(studentFee?.dueAmount),
+      LEFT + 12,
+      summaryY + 38,
+      80,
+      170,
+    );
+
+    // Status
+    const status = String(studentFee?.status || "Pending").toUpperCase();
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(8.5)
+      .text("STATUS:", 320, summaryY + 38);
+
+    const statusX = 375;
+    const statusY = summaryY + 33;
+
+    drawRect(statusX, statusY, 105, 18, 0.8);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .text(status, statusX, statusY + 5, {
+        width: 105,
+        align: "center",
+      });
+
+    y = summaryY + summaryH + 18;
+
+    // --------------------------------------------------
+    // AMOUNT RECEIVED BOX
+    // --------------------------------------------------
+
+    drawRect(LEFT, y, CONTENT_WIDTH, 48, 1);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .text("AMOUNT RECEIVED", LEFT + 12, y + 8);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(15)
+      .text(money(payment?.amount), LEFT + 12, y + 22);
+
+    doc
+      .font("Helvetica")
+      .fontSize(7.5)
+      .text("Thank you for your payment.", 370, y + 19, {
+        width: 155,
+        align: "right",
+      });
+
+    // --------------------------------------------------
+    // SIGNATURE SECTION
+    // --------------------------------------------------
+
+    const signatureY = y + 67;
+
+    drawLine(LEFT + 15, signatureY, LEFT + 150, signatureY, 0.7);
+
+    drawLine(RIGHT - 150, signatureY, RIGHT - 15, signatureY, 0.7);
+
+    doc
+      .font("Helvetica")
+      .fontSize(7.5)
+      .text("Student / Parent Signature", LEFT + 15, signatureY + 5, {
+        width: 135,
+        align: "center",
+      });
+
+    doc
+      .font("Helvetica")
+      .fontSize(7.5)
+      .text("Authorized Signature", RIGHT - 150, signatureY + 5, {
+        width: 135,
+        align: "center",
+      });
+
+    // --------------------------------------------------
+    // FOOTER
+    // --------------------------------------------------
+
+    drawLine(LEFT, PAGE_HEIGHT - 62, RIGHT, PAGE_HEIGHT - 62, 0.6);
+
+    doc
+      .font("Helvetica")
       .fontSize(7)
       .text(
-        `Receipt generated on ${new Date().toLocaleString()}`,
-        left,
-        pageHeight - 52,
+        "This is a computer-generated receipt and does not require a stamp.",
+        LEFT,
+        PAGE_HEIGHT - 50,
         {
-          width,
+          width: CONTENT_WIDTH,
           align: "center",
         },
       );
 
-    // FINISH PDF
+    doc
+      .font("Helvetica")
+      .fontSize(6.5)
+      .text(
+        `Generated on ${new Date().toLocaleString()}`,
+        LEFT,
+        PAGE_HEIGHT - 37,
+        {
+          width: CONTENT_WIDTH,
+          align: "center",
+        },
+      );
+
+    // --------------------------------------------------
+    // FINISH
+    // --------------------------------------------------
 
     doc.end();
   } catch (error) {
     console.error("Download Receipt PDF Error:", error);
 
-    // Only send JSON if headers haven't already been sent
     if (!res.headersSent) {
       res.status(500).json({
         message: "Failed to generate receipt PDF",
@@ -569,7 +748,9 @@ const downloadReceiptPDF = async (req, res) => {
   }
 };
 
+// ======================================================
 // EXPORT
+// ======================================================
 
 module.exports = {
   createReceipt,
