@@ -1,10 +1,9 @@
 const Receipt = require("../models/Receipt");
 const Payment = require("../models/Payment");
-
 const PDFDocument = require("pdfkit");
 
+// GENERATE UNIQUE RECEIPT NUMBER
 
-// Generate unique receipt number
 const generateReceiptNumber = async () => {
   const year = new Date().getFullYear();
 
@@ -16,6 +15,7 @@ const generateReceiptNumber = async () => {
 };
 
 // CREATE RECEIPT
+
 const createReceipt = async (req, res) => {
   try {
     const { paymentId } = req.body;
@@ -26,7 +26,6 @@ const createReceipt = async (req, res) => {
       });
     }
 
-    // Check payment
     const payment = await Payment.findById(paymentId);
 
     if (!payment) {
@@ -35,7 +34,7 @@ const createReceipt = async (req, res) => {
       });
     }
 
-    // Check existing receipt
+    // Check if receipt already exists
     const existingReceipt = await Receipt.findOne({
       paymentId,
     });
@@ -47,16 +46,47 @@ const createReceipt = async (req, res) => {
       });
     }
 
-    // Generate receipt number
     const receiptNumber = await generateReceiptNumber();
 
-    // Create receipt
     const receipt = await Receipt.create({
       paymentId,
       receiptNumber,
     });
 
-    const populatedReceipt = await Receipt.findById(receipt._id)
+    const populatedReceipt = await Receipt.findById(receipt._id).populate({
+      path: "paymentId",
+      populate: {
+        path: "studentFeeId",
+        populate: [
+          {
+            path: "studentId",
+          },
+          {
+            path: "feeStructureId",
+          },
+        ],
+      },
+    });
+
+    res.status(201).json({
+      message: "Receipt generated successfully",
+      receipt: populatedReceipt,
+    });
+  } catch (error) {
+    console.error("Create Receipt Error:", error);
+
+    res.status(500).json({
+      message: "Failed to generate receipt",
+      error: error.message,
+    });
+  }
+};
+
+// GET ALL RECEIPTS
+
+const getReceipts = async (req, res) => {
+  try {
+    const receipts = await Receipt.find()
       .populate({
         path: "paymentId",
         populate: {
@@ -69,32 +99,6 @@ const createReceipt = async (req, res) => {
               path: "feeStructureId",
             },
           ],
-        },
-      });
-
-    res.status(201).json({
-      message: "Receipt generated successfully",
-      receipt: populatedReceipt,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to generate receipt",
-      error: error.message,
-    });
-  }
-};
-
-// GET ALL RECEIPTS
-const getReceipts = async (req, res) => {
-  try {
-    const receipts = await Receipt.find()
-      .populate({
-        path: "paymentId",
-        populate: {
-          path: "studentFeeId",
-          populate: {
-            path: "studentId",
-          },
         },
       })
       .sort({ createdAt: -1 });
@@ -104,6 +108,8 @@ const getReceipts = async (req, res) => {
       receipts,
     });
   } catch (error) {
+    console.error("Get Receipts Error:", error);
+
     res.status(500).json({
       message: "Failed to fetch receipts",
       error: error.message,
@@ -112,23 +118,23 @@ const getReceipts = async (req, res) => {
 };
 
 // GET SINGLE RECEIPT
+
 const getReceiptById = async (req, res) => {
   try {
-    const receipt = await Receipt.findById(req.params.id)
-      .populate({
-        path: "paymentId",
-        populate: {
-          path: "studentFeeId",
-          populate: [
-            {
-              path: "studentId",
-            },
-            {
-              path: "feeStructureId",
-            },
-          ],
-        },
-      });
+    const receipt = await Receipt.findById(req.params.id).populate({
+      path: "paymentId",
+      populate: {
+        path: "studentFeeId",
+        populate: [
+          {
+            path: "studentId",
+          },
+          {
+            path: "feeStructureId",
+          },
+        ],
+      },
+    });
 
     if (!receipt) {
       return res.status(404).json({
@@ -140,6 +146,8 @@ const getReceiptById = async (req, res) => {
       receipt,
     });
   } catch (error) {
+    console.error("Get Receipt Error:", error);
+
     res.status(500).json({
       message: "Failed to fetch receipt",
       error: error.message,
@@ -148,6 +156,7 @@ const getReceiptById = async (req, res) => {
 };
 
 // GET RECEIPT BY PAYMENT
+
 const getReceiptByPayment = async (req, res) => {
   try {
     const receipt = await Receipt.findOne({
@@ -177,6 +186,8 @@ const getReceiptByPayment = async (req, res) => {
       receipt,
     });
   } catch (error) {
+    console.error("Get Receipt By Payment Error:", error);
+
     res.status(500).json({
       message: "Failed to fetch receipt",
       error: error.message,
@@ -184,27 +195,26 @@ const getReceiptByPayment = async (req, res) => {
   }
 };
 
-// ======================================================
-// DOWNLOAD RECEIPT AS PDF
-// ======================================================
+// DOWNLOAD RECEIPT PDF
 
 const downloadReceiptPDF = async (req, res) => {
   try {
-    const receipt = await Receipt.findById(req.params.id)
-      .populate({
-        path: "paymentId",
-        populate: {
-          path: "studentFeeId",
-          populate: [
-            {
-              path: "studentId",
-            },
-            {
-              path: "feeStructureId",
-            },
-          ],
-        },
-      });
+    // GET RECEIPT
+
+    const receipt = await Receipt.findById(req.params.id).populate({
+      path: "paymentId",
+      populate: {
+        path: "studentFeeId",
+        populate: [
+          {
+            path: "studentId",
+          },
+          {
+            path: "feeStructureId",
+          },
+        ],
+      },
+    });
 
     if (!receipt) {
       return res.status(404).json({
@@ -212,234 +222,354 @@ const downloadReceiptPDF = async (req, res) => {
       });
     }
 
+    // DATA
+
     const payment = receipt.paymentId;
     const studentFee = payment.studentFeeId;
     const student = studentFee.studentId;
     const feeStructure = studentFee.feeStructureId;
 
-    // Create PDF
+    // PDF SETUP
+
     const doc = new PDFDocument({
       size: "A4",
-      margin: 50,
+      margin: 35,
+      autoFirstPage: true,
     });
 
-    // Set response headers
-    res.setHeader(
-      "Content-Type",
-      "application/pdf"
-    );
+    res.setHeader("Content-Type", "application/pdf");
 
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=${receipt.receiptNumber}.pdf`
+      `attachment; filename="${receipt.receiptNumber}.pdf"`,
     );
 
-    // Send PDF directly to browser
     doc.pipe(res);
 
-    // ==================================================
-    // HEADER
-    // ==================================================
+    const pageWidth = 595.28;
+    const pageHeight = 841.89;
+
+    const left = 35;
+    const right = pageWidth - 35;
+    const width = right - left;
+
+    // HELPER FUNCTIONS
+
+    const drawBox = (x, y, w, h) => {
+      doc.rect(x, y, w, h).lineWidth(0.8).stroke();
+    };
+
+    const drawLine = (x1, y1, x2, y2) => {
+      doc.moveTo(x1, y1).lineTo(x2, y2).lineWidth(0.7).stroke();
+    };
+
+    const sectionTitle = (title, y) => {
+      doc.font("Helvetica-Bold").fontSize(11).text(title, left, y);
+
+      return y + 18;
+    };
+
+    const labelValue = (label, value, x, y, labelWidth = 90) => {
+      doc.font("Helvetica-Bold").fontSize(9).text(label, x, y, {
+        width: labelWidth,
+      });
+
+      doc
+        .font("Helvetica")
+        .fontSize(9)
+        .text(value || "N/A", x + labelWidth, y);
+    };
+
+    // OUTER BORDER
+
+    drawBox(20, 20, pageWidth - 40, pageHeight - 40);
+
+    // SCHOOL HEADER
 
     doc
-      .fontSize(22)
       .font("Helvetica-Bold")
-      .text("STUDENT FEE MANAGEMENT SYSTEM", {
+      .fontSize(19)
+      .text("STUDENT FEE MANAGEMENT SYSTEM", left, 42, {
+        width,
         align: "center",
       });
 
-    doc.moveDown(0.5);
-
     doc
-      .fontSize(18)
-      .text("PAYMENT RECEIPT", {
+      .font("Helvetica")
+      .fontSize(9)
+      .text("SCHOOL FEE COLLECTION RECEIPT", left, 68, {
+        width,
         align: "center",
       });
 
-    doc.moveDown();
+    drawLine(left, 88, right, 88);
 
-    // Horizontal line
-    doc
-      .moveTo(50, doc.y)
-      .lineTo(545, doc.y)
-      .stroke();
-
-    doc.moveDown();
-
-    // ==================================================
     // RECEIPT INFORMATION
-    // ==================================================
 
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .text("Receipt Number:");
+    let y = 100;
 
-    doc
-      .font("Helvetica")
-      .text(receipt.receiptNumber);
+    drawBox(left, y, width, 48);
 
-    doc.moveDown(0.5);
+    labelValue("Receipt No:", receipt.receiptNumber, left + 10, y + 10, 75);
 
-    doc
-      .font("Helvetica-Bold")
-      .text("Payment Date:");
-
-    doc
-      .font("Helvetica")
-      .text(
-        new Date(payment.paymentDate).toLocaleDateString()
-      );
-
-    doc.moveDown();
-
-    // ==================================================
-    // STUDENT INFORMATION
-    // ==================================================
-
-    doc
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("Student Information");
-
-    doc.moveDown(0.5);
-
-    doc
-      .fontSize(11)
-      .font("Helvetica")
-      .text(`Student ID: ${student.studentId || "N/A"}`)
-      .text(`Name: ${student.name || "N/A"}`)
-      .text(`Class: ${student.class || "N/A"}`)
-      .text(`Section: ${student.section || "N/A"}`)
-      .text(`Email: ${student.email || "N/A"}`);
-
-    doc.moveDown();
-
-    // ==================================================
-    // FEE INFORMATION
-    // ==================================================
-
-    doc
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("Fee Information");
-
-    doc.moveDown(0.5);
-
-    doc
-      .fontSize(11)
-      .font("Helvetica")
-      .text(
-        `Fee Structure: ${feeStructure?.name || "N/A"}`
-      )
-      .text(
-        `Tuition Fee: Rs. ${feeStructure?.tuitionFee || 0}`
-      )
-      .text(
-        `Transport Fee: Rs. ${feeStructure?.transportFee || 0}`
-      )
-      .text(
-        `Exam Fee: Rs. ${feeStructure?.examFee || 0}`
-      );
-
-    doc.moveDown();
-
-    // ==================================================
-    // PAYMENT INFORMATION
-    // ==================================================
-
-    doc
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("Payment Information");
-
-    doc.moveDown(0.5);
-
-    doc
-      .fontSize(11)
-      .font("Helvetica")
-      .text(
-        `Payment Method: ${payment.paymentMethod}`
-      )
-      .text(
-        `Transaction Number: ${
-          payment.transactionNumber || "N/A"
-        }`
-      )
-      .text(
-        `Amount Paid: Rs. ${payment.amount}`
-      );
-
-    doc.moveDown();
-
-    // ==================================================
-    // FEE SUMMARY
-    // ==================================================
-
-    doc
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("Fee Summary");
-
-    doc.moveDown(0.5);
-
-    doc
-      .fontSize(11)
-      .font("Helvetica")
-      .text(
-        `Total Fee: Rs. ${studentFee.totalAmount}`
-      )
-      .text(
-        `Total Paid: Rs. ${studentFee.paidAmount}`
-      )
-      .text(
-        `Remaining Due: Rs. ${studentFee.dueAmount}`
-      )
-      .text(
-        `Status: ${studentFee.status}`
-      );
-
-    doc.moveDown(2);
-
-    // ==================================================
-    // FOOTER
-    // ==================================================
-
-    doc
-      .fontSize(11)
-      .text(
-        "This is a computer-generated receipt.",
-        {
-          align: "center",
-        }
-      );
-
-    doc.moveDown(0.5);
-
-    doc
-      .fontSize(11)
-      .text(
-        "Thank you for your payment.",
-        {
-          align: "center",
-        }
-      );
-
-    // Finish PDF
-    doc.end();
-
-  } catch (error) {
-    console.error(
-      "Download Receipt PDF Error:",
-      error
+    labelValue(
+      "Payment Date:",
+      new Date(payment.paymentDate).toLocaleDateString(),
+      310,
+      y + 10,
+      80,
     );
 
-    res.status(500).json({
-      message: "Failed to generate receipt PDF",
-      error: error.message,
-    });
+    labelValue(
+      "Payment Method:",
+      payment.paymentMethod || "Cash",
+      left + 10,
+      y + 30,
+      90,
+    );
+
+    labelValue(
+      "Transaction No:",
+      payment.transactionNumber || "N/A",
+      310,
+      y + 30,
+      85,
+    );
+
+    y += 62;
+
+    // STUDENT INFORMATION
+
+    y = sectionTitle("STUDENT INFORMATION", y);
+
+    drawBox(left, y, width, 72);
+
+    labelValue(
+      "Student ID:",
+      student?.studentId || "N/A",
+      left + 10,
+      y + 12,
+      75,
+    );
+
+    labelValue("Student Name:", student?.name || "N/A", 310, y + 12, 80);
+
+    labelValue("Class:", student?.class || "N/A", left + 10, y + 35, 75);
+
+    labelValue("Section:", student?.section || "N/A", 310, y + 35, 80);
+
+    labelValue("Email:", student?.email || "N/A", left + 10, y + 56, 75);
+
+    y += 86;
+
+    // FEE DETAILS
+
+    y = sectionTitle("FEE DETAILS", y);
+
+    const feeTableY = y;
+
+    // Table height
+    const feeTableHeight = 112;
+
+    drawBox(left, feeTableY, width, feeTableHeight);
+
+    // Column positions
+    const col1 = left;
+    const col2 = 355;
+    const col3 = right;
+
+    // Header
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .text("FEE DESCRIPTION", col1 + 10, feeTableY + 9);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .text("AMOUNT (Rs.)", col2 + 10, feeTableY + 9);
+
+    drawLine(col1, feeTableY + 27, col3, feeTableY + 27);
+
+    // Tuition
+    doc
+      .font("Helvetica")
+      .fontSize(9)
+      .text("Tuition Fee", col1 + 10, feeTableY + 38);
+
+    doc.text(
+      Number(feeStructure?.tuitionFee || 0).toFixed(2),
+      col2 + 10,
+      feeTableY + 38,
+    );
+
+    // Transport
+    doc.text("Transport Fee", col1 + 10, feeTableY + 56);
+
+    doc.text(
+      Number(feeStructure?.transportFee || 0).toFixed(2),
+      col2 + 10,
+      feeTableY + 56,
+    );
+
+    // Examination
+    doc.text("Examination Fee", col1 + 10, feeTableY + 74);
+
+    doc.text(
+      Number(feeStructure?.examFee || 0).toFixed(2),
+      col2 + 10,
+      feeTableY + 74,
+    );
+
+    // Total
+    drawLine(col1, feeTableY + 92, col3, feeTableY + 92);
+
+    doc.font("Helvetica-Bold").text("TOTAL FEE", col1 + 10, feeTableY + 98);
+
+    doc
+      .font("Helvetica-Bold")
+      .text(
+        `Rs. ${Number(studentFee.totalAmount || 0).toFixed(2)}`,
+        col2 + 10,
+        feeTableY + 98,
+      );
+
+    y = feeTableY + feeTableHeight + 18;
+
+    // PAYMENT DETAILS
+
+    y = sectionTitle("PAYMENT DETAILS", y);
+
+    const paymentBoxY = y;
+
+    drawBox(left, paymentBoxY, width, 65);
+
+    labelValue(
+      "Amount Paid:",
+      `Rs. ${Number(payment.amount || 0).toFixed(2)}`,
+      left + 10,
+      paymentBoxY + 12,
+      80,
+    );
+
+    labelValue(
+      "Payment Method:",
+      payment.paymentMethod || "Cash",
+      310,
+      paymentBoxY + 12,
+      90,
+    );
+
+    labelValue(
+      "Transaction No:",
+      payment.transactionNumber || "N/A",
+      left + 10,
+      paymentBoxY + 38,
+      90,
+    );
+
+    labelValue("Remarks:", payment.remarks || "N/A", 310, paymentBoxY + 38, 55);
+
+    y = paymentBoxY + 80;
+
+    // FEE SUMMARY
+
+    y = sectionTitle("FEE SUMMARY", y);
+
+    const summaryY = y;
+
+    drawBox(left, summaryY, width, 78);
+
+    // Row 1
+    labelValue(
+      "Total Fee:",
+      `Rs. ${Number(studentFee.totalAmount || 0).toFixed(2)}`,
+      left + 12,
+      summaryY + 13,
+      80,
+    );
+
+    labelValue(
+      "Total Paid:",
+      `Rs. ${Number(studentFee.paidAmount || 0).toFixed(2)}`,
+      310,
+      summaryY + 13,
+      75,
+    );
+
+    // Row 2
+    labelValue(
+      "Remaining Due:",
+      `Rs. ${Number(studentFee.dueAmount || 0).toFixed(2)}`,
+      left + 12,
+      summaryY + 42,
+      90,
+    );
+
+    labelValue(
+      "Status:",
+      String(studentFee.status || "Pending").toUpperCase(),
+      310,
+      summaryY + 42,
+      50,
+    );
+
+    y = summaryY + 95;
+
+    // THANK YOU MESSAGE
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(10)
+      .text("Thank you for your payment.", left, y, {
+        width,
+        align: "center",
+      });
+
+    doc
+      .font("Helvetica")
+      .fontSize(8)
+      .text(
+        "This is a computer-generated receipt and does not require a signature.",
+        left,
+        y + 17,
+        {
+          width,
+          align: "center",
+        },
+      );
+
+    // FOOTER
+
+    doc
+      .fontSize(7)
+      .text(
+        `Receipt generated on ${new Date().toLocaleString()}`,
+        left,
+        pageHeight - 52,
+        {
+          width,
+          align: "center",
+        },
+      );
+
+    // FINISH PDF
+
+    doc.end();
+  } catch (error) {
+    console.error("Download Receipt PDF Error:", error);
+
+    // Only send JSON if headers haven't already been sent
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: "Failed to generate receipt PDF",
+        error: error.message,
+      });
+    }
   }
 };
+
+// EXPORT
 
 module.exports = {
   createReceipt,
