@@ -137,7 +137,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Fee Statu */}
+      {/* Fee Status */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-200 px-6 py-5">
           <h2 className="text-lg font-semibold text-gray-800">My Fee Status</h2>
