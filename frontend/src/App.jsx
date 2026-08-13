@@ -14,12 +14,10 @@ import Payments from "./pages/admin/Payments";
 import AddPayment from "./pages/admin/AddPayment";
 import Receipts from "./pages/admin/Receipts";
 
-
 //  import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentDashboard from "./pages/student/Dashboard";
 import MyFees from "./pages/student/MyFees";
-
-
+import StudentPayments from "./pages/student/Payments";
 
 import AdminLayout from "./components/AdminLayout";
 import StudentLayout from "./components/StudentLayout";
@@ -32,21 +30,15 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* =========================
-              DEFAULT
-          ========================== */}
+          {/* DEFAULT*/}
 
           <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* =========================
-              LOGIN
-          ========================== */}
+          {/*  LOGIN */}
 
           <Route path="/login" element={<Login />} />
 
-          {/* =========================
-              ADMIN ROUTES
-          ========================== */}
+          {/* ADMIN ROUTES*/}
 
           <Route
             path="/admin"
@@ -64,92 +56,65 @@ function App() {
 
             {/* Students */}
             <Route path="students" element={<Students />} />
-            
+
             {/* Add Students */}
             <Route path="students/add" element={<AddStudent />} />
-             
+
             {/* Edit Students */}
-            <Route path="students/edit/:id"element={<EditStudent />}/>
-            
+            <Route path="students/edit/:id" element={<EditStudent />} />
+
             {/* Fee Structures */}
-            <Route path="fee-structures"element={<FeeStructures />}/>
+            <Route path="fee-structures" element={<FeeStructures />} />
 
             {/* Add Fee Structures */}
-            <Route path="fee-structures/add"element={<AddFeeStructure />}/>
+            <Route path="fee-structures/add" element={<AddFeeStructure />} />
 
             {/* Edit Fee Structures */}
-           <Route path="fee-structures/edit/:id"element={<EditFeeStructure />}/>
+            <Route
+              path="fee-structures/edit/:id"
+              element={<EditFeeStructure />}
+            />
 
-           {/* Student Fees */}
-           <Route path="student-fees"element={<StudentFees />}/>
+            {/* Student Fees */}
+            <Route path="student-fees" element={<StudentFees />} />
 
             {/* Add Student Fees */}
-           <Route path="student-fees/add"element={<AddStudentFee />}/>
-           
-           {/* Payments */}
-           <Route path="payments" element={<Payments />}/>
-          
-           {/* Add Payment */}
-           <Route path="payments/add" element={<AddPayment />}/>
+            <Route path="student-fees/add" element={<AddStudentFee />} />
+
+            {/* Payments */}
+            <Route path="payments" element={<Payments />} />
+
+            {/* Add Payment */}
+            <Route path="payments/add" element={<AddPayment />} />
 
             {/* Receipts */}
-            <Route path="receipts"element={<Receipts />}/>
-
+            <Route path="receipts" element={<Receipts />} />
           </Route>
 
-          {/* =========================
-              STUDENT ROUTES
-          ========================== */}
+               {/*  STUDENT ROUTES*/}
+
+          <Route path="/student"element={ <ProtectedRoute role="student"><StudentLayout /></ProtectedRoute> } >
            
-<Route
-  path="/student"
-  element={
-    <ProtectedRoute role="student">
-      <StudentLayout />
-    </ProtectedRoute>
-  }
->
-  <Route
-    index
-    element={
-      <Navigate
-        to="/student/dashboard"
-        replace
-      />
-    }
-  />
+           {/* /student → /student/dashboard */}
+            <Route index element={<Navigate to="/student/dashboard" replace />}/>
+          
+           {/* Dashboard */}
+            <Route path="dashboard" element={<StudentDashboard />} />
+          
+           {/* Fees */}
+            <Route path="fees" element={<MyFees />} />
+             
+          {/* Payments */}  
+            <Route path="payments" element={<StudentPayments />} />
+           
+           
+            <Route
+              path="receipts"
+              element={<h1 className="text-3xl font-bold">Receipts</h1>}
+            />
+          </Route>
 
-  <Route
-    path="dashboard"
-    element={<StudentDashboard />}
-  />
-
-  <Route
-  path="fees"
-  element={<MyFees />}
-/>
-
-  <Route
-    path="payments"
-    element={
-      <h1 className="text-3xl font-bold">
-        Payment History
-      </h1>
-    }
-  />
-
-  <Route
-    path="receipts"
-    element={
-      <h1 className="text-3xl font-bold">
-        Receipts
-      </h1>
-    }
-  />
-</Route>
-          {/* =========================
-              INVALID URL
-          ========================== */}
+          {/* INVALID URL */}
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
