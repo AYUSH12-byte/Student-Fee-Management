@@ -150,9 +150,9 @@ function Payments() {
                   Transaction
                 </th>
 
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                {/* <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Receipt
-                </th>
+                </th> */}
               </tr>
             </thead>
 
@@ -201,14 +201,14 @@ function Payments() {
                       </td>
 
                       {/* Receipt */}
-                      <td className="px-6 py-4 text-right">
+                      {/* <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => downloadReceipt(payment._id)}
                           className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
                         >
                           Download
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                   );
                 })
