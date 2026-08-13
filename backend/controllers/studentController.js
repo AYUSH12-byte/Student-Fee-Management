@@ -19,7 +19,6 @@ const createStudent = async (req, res) => {
       password,
     } = req.body;
 
-    // Check required fields
     if (!studentId || !name || !email || !studentClass) {
       return res.status(400).json({
         message: "Student ID, name, email and class are required",
@@ -62,7 +61,7 @@ const createStudent = async (req, res) => {
       10
     );
 
-    // Create User account
+    // Create User
     const user = await User.create({
       name,
       email: studentEmail,
@@ -71,7 +70,7 @@ const createStudent = async (req, res) => {
     });
 
     try {
-      // Create Student profile
+      // Create Student
       const student = await Student.create({
         studentId,
         name,
@@ -104,10 +103,7 @@ const createStudent = async (req, res) => {
         },
       });
     } catch (studentError) {
-      // If Student creation fails,
-      // delete the User account that was just created
       await User.findByIdAndDelete(user._id);
-
       throw studentError;
     }
   } catch (error) {
@@ -176,7 +172,7 @@ const getStudentById = async (req, res) => {
 
 
 // ======================================================
-// UPDATE STUDENT
+// UPDATE STUDENT + PASSWORD
 // ======================================================
 
 const updateStudent = async (req, res) => {
@@ -197,9 +193,13 @@ const updateStudent = async (req, res) => {
       section,
       phone,
       address,
+      password,
     } = req.body;
 
-    // Check duplicate student ID
+    // ==================================================
+    // UPDATE STUDENT ID
+    // ==================================================
+
     if (studentId && studentId !== student.studentId) {
       const existingStudentId = await Student.findOne({
         studentId,
@@ -215,19 +215,27 @@ const updateStudent = async (req, res) => {
       student.studentId = studentId;
     }
 
-    // Update email
-    if (email && email.toLowerCase() !== student.email) {
+    // ==================================================
+    // UPDATE EMAIL
+    // ==================================================
+
+    if (
+      email &&
+      email.toLowerCase().trim() !== student.email
+    ) {
       const newEmail = email.toLowerCase().trim();
 
-      // Check student email
-      const existingStudentEmail = await Student.findOne({
-        email: newEmail,
-        _id: { $ne: student._id },
-      });
+      // Check Student email
+      const existingStudentEmail =
+        await Student.findOne({
+          email: newEmail,
+          _id: { $ne: student._id },
+        });
 
       if (existingStudentEmail) {
         return res.status(400).json({
-          message: "Email already belongs to another student",
+          message:
+            "Email already belongs to another student",
         });
       }
 
@@ -239,60 +247,142 @@ const updateStudent = async (req, res) => {
 
       if (existingUser) {
         return res.status(400).json({
-          message: "Email already belongs to another user",
+          message:
+            "Email already belongs to another user",
         });
       }
 
       student.email = newEmail;
 
-      // Update login email too
+      // Update login email
       if (student.userId) {
-        await User.findByIdAndUpdate(student.userId, {
-          email: newEmail,
-        });
+        await User.findByIdAndUpdate(
+          student.userId,
+          {
+            email: newEmail,
+          }
+        );
       }
     }
 
-    // Update student fields
-    if (name) {
-      student.name = name;
+    // ==================================================
+    // UPDATE NAME
+    // ==================================================
+
+    if (name !== undefined && name.trim() !== "") {
+      student.name = name.trim();
+
+      // Update User name
+      if (student.userId) {
+        await User.findByIdAndUpdate(
+          student.userId,
+          {
+            name: name.trim(),
+          }
+        );
+      }
     }
 
-    if (studentClass) {
-      student.class = studentClass;
+    // ==================================================
+    // UPDATE CLASS
+    // ==================================================
+
+    if (
+      studentClass !== undefined &&
+      studentClass.trim() !== ""
+    ) {
+      student.class = studentClass.trim();
     }
+
+    // ==================================================
+    // UPDATE SECTION
+    // ==================================================
 
     if (section !== undefined) {
       student.section = section;
     }
 
+    // ==================================================
+    // UPDATE PHONE
+    // ==================================================
+
     if (phone !== undefined) {
       student.phone = phone;
     }
+
+    // ==================================================
+    // UPDATE ADDRESS
+    // ==================================================
 
     if (address !== undefined) {
       student.address = address;
     }
 
-    const updatedStudent = await student.save();
+    // ==================================================
+    // UPDATE PASSWORD
+    // ==================================================
 
-    // Update User name as well
-    if (student.userId && name) {
-      await User.findByIdAndUpdate(student.userId, {
-        name,
-      });
+    if (
+      password !== undefined &&
+      password.trim() !== ""
+    ) {
+      // Minimum password length
+      if (password.length < 6) {
+        return res.status(400).json({
+          message:
+            "Password must be at least 6 characters",
+        });
+      }
+
+      if (!student.userId) {
+        return res.status(400).json({
+          message:
+            "Student login account not found",
+        });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(
+        password,
+        10
+      );
+
+      // Update User password
+      await User.findByIdAndUpdate(
+        student.userId,
+        {
+          password: hashedPassword,
+        }
+      );
     }
 
-    const populatedStudent = await Student.findById(
-      updatedStudent._id
-    ).populate("userId", "name email role");
+    // ==================================================
+    // SAVE STUDENT
+    // ==================================================
+
+    const updatedStudent = await student.save();
+
+    // ==================================================
+    // GET UPDATED STUDENT
+    // ==================================================
+
+    const populatedStudent =
+      await Student.findById(
+        updatedStudent._id
+      ).populate(
+        "userId",
+        "name email role"
+      );
 
     res.status(200).json({
       message: "Student updated successfully",
       student: populatedStudent,
     });
   } catch (error) {
-    console.error("Update Student Error:", error);
+    console.error(
+      "Update Student Error:",
+      error
+    );
 
     res.status(500).json({
       message: "Failed to update student",
@@ -308,7 +398,9 @@ const updateStudent = async (req, res) => {
 
 const deleteStudent = async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id);
+    const student = await Student.findById(
+      req.params.id
+    );
 
     if (!student) {
       return res.status(404).json({
@@ -316,19 +408,27 @@ const deleteStudent = async (req, res) => {
       });
     }
 
-    // Delete Student
-    await Student.findByIdAndDelete(student._id);
+    // Delete student
+    await Student.findByIdAndDelete(
+      student._id
+    );
 
-    // Delete linked User account
+    // Delete linked user account
     if (student.userId) {
-      await User.findByIdAndDelete(student.userId);
+      await User.findByIdAndDelete(
+        student.userId
+      );
     }
 
     res.status(200).json({
-      message: "Student and user account deleted successfully",
+      message:
+        "Student and user account deleted successfully",
     });
   } catch (error) {
-    console.error("Delete Student Error:", error);
+    console.error(
+      "Delete Student Error:",
+      error
+    );
 
     res.status(500).json({
       message: "Failed to delete student",
