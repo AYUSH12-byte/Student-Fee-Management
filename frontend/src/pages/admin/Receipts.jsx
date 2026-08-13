@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import api from "../../services/api";
 
 function Receipts() {
@@ -50,7 +49,6 @@ function Receipts() {
       const link = document.createElement("a");
 
       link.href = url;
-
       link.download = `${receipt.receiptNumber}.pdf`;
 
       document.body.appendChild(link);
@@ -98,7 +96,7 @@ function Receipts() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Receipts</h1>
 
@@ -106,13 +104,6 @@ function Receipts() {
             View and download student payment receipts
           </p>
         </div>
-
-        {/* <Link
-          to="/admin/payments/add"
-          className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-        >
-          + Record Payment
-        </Link> */}
       </div>
 
       {/* Error */}
@@ -138,6 +129,7 @@ function Receipts() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
+            {/* Table Header */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -166,6 +158,7 @@ function Receipts() {
               </tr>
             </thead>
 
+            {/* Table Body */}
             <tbody className="divide-y divide-gray-100">
               {filteredReceipts.length > 0 ? (
                 filteredReceipts.map((receipt) => {
@@ -207,7 +200,7 @@ function Receipts() {
                         </span>
                       </td>
 
-                      {/* Method */}
+                      {/* Payment Method */}
                       <td className="px-6 py-4">
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                           {payment?.paymentMethod || "N/A"}
@@ -221,7 +214,7 @@ function Receipts() {
                           : "N/A"}
                       </td>
 
-                      {/* Action */}
+                      {/* Download */}
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => downloadReceipt(receipt)}
