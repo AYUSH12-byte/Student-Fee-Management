@@ -100,7 +100,7 @@ function StudentLayout() {
         </div>
       </aside>
 
-      {/* Main Contents */}
+      {/* Main Content */}
       <main className="ml-64 min-h-screen">
         {/* Top Header */}
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">
