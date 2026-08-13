@@ -42,41 +42,7 @@ function Payments() {
     );
   });
 
-  const downloadReceipt = async (paymentId) => {
-    try {
-      const response = await api.get(`/receipts/payment/${paymentId}`);
-
-      const receiptId = response.data.receipt?._id;
-
-      if (!receiptId) {
-        alert("Receipt not found.");
-        return;
-      }
-
-      const pdfResponse = await api.get(`/receipts/${receiptId}/pdf`, {
-        responseType: "blob",
-      });
-
-      const blob = new Blob([pdfResponse.data], { type: "application/pdf" });
-
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `receipt-${receiptId}.pdf`;
-
-      document.body.appendChild(link);
-      link.click();
-
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download Receipt Error:", error);
-
-      alert(error.response?.data?.message || "Failed to download receipt");
-    }
-  };
-
+  // Loading
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -128,6 +94,7 @@ function Payments() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
+            {/* Table Header */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -149,13 +116,10 @@ function Payments() {
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Transaction
                 </th>
-
-                {/* <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Receipt
-                </th> */}
               </tr>
             </thead>
 
+            {/* Table Body */}
             <tbody className="divide-y divide-gray-100">
               {filteredPayments.length > 0 ? (
                 filteredPayments.map((payment) => {
@@ -184,7 +148,7 @@ function Payments() {
                       {/* Method */}
                       <td className="px-6 py-4">
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                          {payment.paymentMethod}
+                          {payment.paymentMethod || "Cash"}
                         </span>
                       </td>
 
@@ -199,22 +163,12 @@ function Payments() {
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {payment.transactionNumber || "N/A"}
                       </td>
-
-                      {/* Receipt */}
-                      {/* <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => downloadReceipt(payment._id)}
-                          className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
-                        >
-                          Download
-                        </button>
-                      </td> */}
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center">
+                  <td colSpan="5" className="px-6 py-12 text-center">
                     <p className="font-medium text-gray-600">
                       No payments found
                     </p>
