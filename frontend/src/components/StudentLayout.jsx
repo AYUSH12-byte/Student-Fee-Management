@@ -2,8 +2,8 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function StudentLayout() {
-  const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
@@ -14,118 +14,111 @@ function StudentLayout() {
     {
       name: "Dashboard",
       path: "/student/dashboard",
-      icon: "📊",
     },
     {
       name: "My Fees",
       path: "/student/fees",
-      icon: "💰",
     },
     {
       name: "Payment History",
       path: "/student/payments",
-      icon: "💳",
     },
     {
       name: "Receipts",
       path: "/student/receipts",
-      icon: "🧾",
     },
   ];
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col bg-gray-900 text-white">
+      {/* ================= SIDEBAR ================= */}
+      <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-slate-900 text-white">
         {/* Logo */}
-        <div className="border-b border-gray-700 px-6 py-5">
-          <h1 className="text-xl font-bold">Student Fee</h1>
+        <div className="flex h-20 items-center border-b border-slate-700 px-6">
+          <div>
+            <h1 className="text-lg font-bold">Fee Management</h1>
 
-          <p className="mt-1 text-xs text-gray-400">Student Portal</p>
+            <p className="text-xs text-slate-400">Student Portal</p>
+          </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6">
-          <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <nav className="px-4 py-6">
+          <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
             Menu
           </p>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             {menuItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${
+                  `block rounded-lg px-4 py-3 text-sm font-medium transition ${
                     isActive
                       ? "bg-blue-600 text-white"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`
                 }
               >
-                <span className="text-lg">{item.icon}</span>
-
-                <span>{item.name}</span>
+                {item.name}
               </NavLink>
             ))}
           </div>
         </nav>
 
-        {/* User / Logout */}
-        <div className="border-t border-gray-700 p-4">
-          <div className="mb-3 flex items-center gap-3 px-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-semibold">
-              {user?.name?.charAt(0)?.toUpperCase() || "S"}
-            </div>
+        {/* ================= USER / LOGOUT ================= */}
+        <div className="absolute bottom-0 left-0 w-full border-t border-slate-700 p-4">
+          <div className="mb-3 px-2">
+            <p className="truncate text-sm font-medium">
+              {user?.name || "Student"}
+            </p>
 
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-white">
-                {user?.name || "Student"}
-              </p>
-
-              <p className="truncate text-xs text-gray-400">
-                {user?.email || ""}
-              </p>
-            </div>
+            <p className="truncate text-xs text-slate-400">
+              {user?.email || ""}
+            </p>
           </div>
 
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition hover:bg-red-600 hover:text-white"
+            className="w-full rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-600"
           >
-            <span className="text-lg">🚪</span>
-
-            <span>Logout</span>
+            Logout
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="ml-64 min-h-screen">
-        {/* Top Header */}
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">
+      {/* ================= MAIN CONTENT ================= */}
+      <div className="ml-64">
+        {/* Top Navbar */}
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-gray-200 bg-white px-8">
           <div>
             <h2 className="text-lg font-semibold text-gray-800">
-              Student Portal
+              Student Fee Management System
             </h2>
           </div>
 
+          {/* User */}
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">
-              Welcome, {user?.name || "Student"}
-            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-600">
+              {user?.name ? user.name.charAt(0).toUpperCase() : "S"}
+            </div>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-600">
-              {user?.name?.charAt(0)?.toUpperCase() || "S"}
+            <div>
+              <p className="text-sm font-semibold text-gray-800">
+                {user?.name || "Student"}
+              </p>
+
+              <p className="text-xs text-gray-500">Student</p>
             </div>
           </div>
         </header>
 
-        {/* Page Contents */}
-        <div className="p-8">
+        {/* Page Content */}
+        <main className="p-8">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
