@@ -11,6 +11,7 @@ A full-stack web application for managing student fee records, fee structures, p
 - Backend: Node.js + Express
 - Database: MongoDB with Mongoose
 - Authentication: JWT + bcrypt
+- Email notifications: Nodemailer + Gmail SMTP
 - PDF generation: PDFKit
 
 ## Features
@@ -24,6 +25,9 @@ A full-stack web application for managing student fee records, fee structures, p
 - Record payments and prevent overpayment
 - Automatic receipt generation
 - Download receipts as PDF
+- Due-date tracking for each fee assignment
+- Fee reminder emails sent before the due date
+- Reminder history and admin reminder dashboard
 - Student-specific portal with fee and payment information
 - Role-based access control
 
@@ -73,7 +77,15 @@ npm install
 PORT=7000
 MONGO_URI=mongodb://localhost:27017/student-fee-management
 JWT_SECRET=your_super_secret_key_here
+
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-gmail@gmail.com
+EMAIL_PASS=your-gmail-app-password
+EMAIL_FROM=your-gmail@gmail.com
 ```
+
+> Use a Gmail App Password, not your normal Gmail password.
 
 3. Start the backend server:
 
@@ -170,18 +182,21 @@ Admins can:
 - view the dashboard overview
 - add and edit students
 - add and manage fee structures
-- assign fee records to students
+- assign fee records to students with due dates
 - track fee collections and payment status
 - create payments and download receipts
+- send reminder emails for upcoming due fees
+- view reminder history and pending due fee notifications
 
 ### Student Role
 
 Students can:
 
 - log in with their own account
-- view their due fees
+- view their due fees and due dates
 - review payment history
 - access receipts generated for their payments
+- receive reminder emails before due dates
 
 ## API Overview
 
@@ -193,6 +208,7 @@ The backend exposes these main routes:
 - `/api/student-fees` - student fee records
 - `/api/payments` - payment handling
 - `/api/receipts` - receipt retrieval and PDF generation
+- `/api/reminders` - due-fee reminder preview, sends, and history
 - `/api/student-portal` - student-only fee/payment views
 - `/api/dashboard` - dashboard metrics and summaries
 
@@ -241,6 +257,19 @@ npm run preview
 - Check browser devtools for API errors
 - Verify the backend is listening on the expected port
 - Ensure the token is being sent with requests after login
+
+### Reminder emails not sending
+
+- Make sure `EMAIL_HOST`, `EMAIL_USER`, `EMAIL_PASS`, and `EMAIL_FROM` are set in the backend `.env`
+- Use a Gmail App Password, not your normal Gmail password
+- Ensure 2-Step Verification is enabled on the Gmail account
+- Confirm the student has a valid email address in the database
+
+### Email SMTP errors
+
+- Gmail usually requires `smtp.gmail.com` on port `587`
+- If authentication fails, generate a fresh Gmail App Password and update `.env`
+- Restart the backend after changing email environment values
 
 ## License
 
