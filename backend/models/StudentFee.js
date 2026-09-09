@@ -32,6 +32,16 @@ const studentFeeSchema = new mongoose.Schema(
       min: 0,
     },
 
+    dueDate: {
+      type: Date,
+      required: true,
+      default: function () {
+        const date = new Date();
+        date.setDate(date.getDate() + 15);
+        return date;
+      },
+    },
+
     status: {
       type: String,
       enum: ["Pending", "Partial", "Paid"],
@@ -40,13 +50,10 @@ const studentFeeSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Prevent duplicate fee assignment
-studentFeeSchema.index(
-  { studentId: 1, feeStructureId: 1 },
-  { unique: true }
-);
+studentFeeSchema.index({ studentId: 1, feeStructureId: 1 }, { unique: true });
 
 module.exports = mongoose.model("StudentFee", studentFeeSchema);

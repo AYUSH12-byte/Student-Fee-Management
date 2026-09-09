@@ -35,6 +35,10 @@ function AdminLayout() {
       name: "Receipts",
       path: "/admin/receipts",
     },
+    {
+      name: "Reminders",
+      path: "/admin/reminders",
+    },
   ];
 
   return (

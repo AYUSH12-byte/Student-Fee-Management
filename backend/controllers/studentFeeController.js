@@ -5,7 +5,7 @@ const FeeStructure = require("../models/FeeStructure");
 // ASSIGN FEE TO STUDENT
 const assignFee = async (req, res) => {
   try {
-    const { studentId, feeStructureId } = req.body;
+    const { studentId, feeStructureId, dueDate } = req.body;
 
     if (!studentId || !feeStructureId) {
       return res.status(400).json({
@@ -43,12 +43,17 @@ const assignFee = async (req, res) => {
       });
     }
 
+    const normalizedDueDate = dueDate
+      ? new Date(dueDate)
+      : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+
     const studentFee = await StudentFee.create({
       studentId,
       feeStructureId,
       totalAmount: feeStructure.totalFee,
       paidAmount: 0,
       dueAmount: feeStructure.totalFee,
+      dueDate: normalizedDueDate,
       status: "Pending",
     });
 

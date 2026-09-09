@@ -117,6 +117,10 @@ function StudentFees() {
                 </th>
 
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Due Date
+                </th>
+
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Status
                 </th>
               </tr>
@@ -150,6 +154,12 @@ function StudentFees() {
 
                     <td className="px-6 py-4 text-sm text-red-600">
                       Rs. {Number(item.dueAmount || 0).toLocaleString()}
+                    </td>
+
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      {item.dueDate
+                        ? new Date(item.dueDate).toLocaleDateString()
+                        : "N/A"}
                     </td>
 
                     <td className="px-6 py-4">

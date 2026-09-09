@@ -10,6 +10,11 @@ function AddStudentFee() {
 
   const [studentId, setStudentId] = useState("");
   const [feeStructureId, setFeeStructureId] = useState("");
+  const [dueDate, setDueDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 15);
+    return date.toISOString().slice(0, 10);
+  });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -85,6 +90,7 @@ function AddStudentFee() {
       await api.post("/student-fees", {
         studentId,
         feeStructureId,
+        dueDate,
       });
 
       navigate("/admin/student-fees");
@@ -262,22 +268,22 @@ function AddStudentFee() {
             </div>
           )}
 
-          {/* Initial Payment Information */}
+          {/* Due Date */}
           <div className="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-700">Initial Payment</p>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Due Date
+            </label>
 
-            <p className="mt-1 text-sm text-gray-500">
-              The student will be assigned the full fee amount with a payment of
-              Rs. 0.
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+
+            <p className="mt-2 text-sm text-gray-500">
+              Reminder emails will be scheduled before this due date.
             </p>
-
-            <div className="mt-3 flex justify-between text-sm">
-              <span>Initial Status</span>
-
-              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
-                Pending
-              </span>
-            </div>
           </div>
 
           {/* Buttons */}

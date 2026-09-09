@@ -1,6 +1,7 @@
 const Student = require("../models/Student");
 const StudentFee = require("../models/StudentFee");
 const Payment = require("../models/Payment");
+const Reminder = require("../models/Reminder");
 
 const getDashboard = async (req, res) => {
   try {
@@ -13,17 +14,17 @@ const getDashboard = async (req, res) => {
     // Calculate totals
     const totalFees = studentFees.reduce(
       (sum, fee) => sum + fee.totalAmount,
-      0
+      0,
     );
 
     const totalCollected = studentFees.reduce(
       (sum, fee) => sum + fee.paidAmount,
-      0
+      0,
     );
 
     const totalPending = studentFees.reduce(
       (sum, fee) => sum + fee.dueAmount,
-      0
+      0,
     );
 
     // Today's date range
@@ -43,7 +44,7 @@ const getDashboard = async (req, res) => {
 
     const todayCollection = todayPayments.reduce(
       (sum, payment) => sum + payment.amount,
-      0
+      0,
     );
 
     // Recent payments
@@ -57,6 +58,11 @@ const getDashboard = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
+    // Pending reminders
+    const pendingReminders = await Reminder.find({
+      status: "sent",
+    }).countDocuments();
+
     res.status(200).json({
       summary: {
         totalStudents,
@@ -64,6 +70,7 @@ const getDashboard = async (req, res) => {
         totalCollected,
         totalPending,
         todayCollection,
+        pendingReminders,
       },
 
       recentPayments,

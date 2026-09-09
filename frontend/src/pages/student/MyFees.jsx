@@ -158,6 +158,10 @@ function MyFees() {
                 </th>
 
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Due Date
+                </th>
+
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Status
                 </th>
               </tr>
@@ -209,6 +213,13 @@ function MyFees() {
                       {/* Due */}
                       <td className="px-6 py-4 text-sm font-semibold text-red-600">
                         {formatCurrency(fee.dueAmount)}
+                      </td>
+
+                      {/* Due Date */}
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {fee.dueDate
+                          ? new Date(fee.dueDate).toLocaleDateString()
+                          : "N/A"}
                       </td>
 
                       {/* Status */}

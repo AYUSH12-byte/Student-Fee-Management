@@ -20,6 +20,7 @@ import Payments from "../pages/admin/Payments";
 import AddPayment from "../pages/admin/AddPayment";
 
 import Receipts from "../pages/admin/Receipts";
+import Reminders from "../pages/admin/Reminders";
 
 // Student Pages
 import StudentDashboard from "../pages/student/Dashboard";
@@ -87,6 +88,9 @@ function AppRoutes() {
 
         {/* Receipts */}
         <Route path="receipts" element={<Receipts />} />
+
+        {/* Reminders */}
+        <Route path="reminders" element={<Reminders />} />
       </Route>
 
       {/* STUDENT ROUTE */}
