@@ -169,7 +169,9 @@ function Dashboard() {
           </div>
 
           <div className="overflow-x-auto">
-            {dashboard?.recentPayments?.length > 0 ? (
+            {dashboard?.recentPayments?.filter(
+              (payment) => payment.studentFeeId?.studentId,
+            ).length > 0 ? (
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -192,36 +194,47 @@ function Dashboard() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-100">
-                  {dashboard.recentPayments.map((payment) => (
-                    <tr key={payment._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-gray-800">
-                          {payment.studentFeeId?.studentId?.name ||
-                            "Unknown Student"}
-                        </div>
+                  {dashboard.recentPayments
+                    .filter((payment) => payment.studentFeeId?.studentId)
+                    .map((payment) => {
+                      const student = payment.studentFeeId.studentId;
 
-                        <div className="text-xs text-gray-500">
-                          {payment.studentFeeId?.studentId?.studentId || "N/A"}
-                        </div>
-                      </td>
+                      return (
+                        <tr key={payment._id} className="hover:bg-gray-50">
+                          {/* Student */}
+                          <td className="px-6 py-4">
+                            <div className="font-medium text-gray-800">
+                              {student.name}
+                            </div>
 
-                      <td className="px-6 py-4 font-semibold text-gray-800">
-                        Rs. {Number(payment.amount || 0).toLocaleString()}
-                      </td>
+                            <div className="text-xs text-gray-500">
+                              {student.studentId}
+                            </div>
+                          </td>
 
-                      <td className="px-6 py-4">
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                          {payment.paymentMethod || "Cash"}
-                        </span>
-                      </td>
+                          {/* Amount */}
+                          <td className="px-6 py-4 font-semibold text-gray-800">
+                            Rs. {Number(payment.amount || 0).toLocaleString()}
+                          </td>
 
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {payment.paymentDate
-                          ? new Date(payment.paymentDate).toLocaleDateString()
-                          : "N/A"}
-                      </td>
-                    </tr>
-                  ))}
+                          {/* Method */}
+                          <td className="px-6 py-4">
+                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                              {payment.paymentMethod || "Cash"}
+                            </span>
+                          </td>
+
+                          {/* Date */}
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {payment.paymentDate
+                              ? new Date(
+                                  payment.paymentDate,
+                                ).toLocaleDateString()
+                              : ""}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             ) : (

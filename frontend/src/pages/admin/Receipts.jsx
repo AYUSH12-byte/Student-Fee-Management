@@ -7,9 +7,6 @@ function Receipts() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
-  // =========================
-  // FETCH RECEIPTS
-  // =========================
   const fetchReceipts = async () => {
     try {
       setLoading(true);
@@ -31,9 +28,6 @@ function Receipts() {
     fetchReceipts();
   }, []);
 
-  // =========================
-  // DOWNLOAD PDF
-  // =========================
   const downloadReceipt = async (receipt) => {
     try {
       const response = await api.get(`/receipts/${receipt._id}/pdf`, {
@@ -52,9 +46,7 @@ function Receipts() {
       link.download = `${receipt.receiptNumber}.pdf`;
 
       document.body.appendChild(link);
-
       link.click();
-
       link.remove();
 
       window.URL.revokeObjectURL(url);
@@ -65,26 +57,23 @@ function Receipts() {
     }
   };
 
-  // =========================
-  // FILTER
-  // =========================
   const filteredReceipts = receipts.filter((receipt) => {
     const payment = receipt.paymentId;
-
     const student = payment?.studentFeeId?.studentId;
 
-    const searchText = search.toLowerCase();
+    if (!student) {
+      return false;
+    }
+
+    const searchText = search.toLowerCase().trim();
 
     return (
       receipt.receiptNumber?.toLowerCase().includes(searchText) ||
-      student?.name?.toLowerCase().includes(searchText) ||
-      student?.studentId?.toLowerCase().includes(searchText)
+      student.name?.toLowerCase().includes(searchText) ||
+      student.studentId?.toLowerCase().includes(searchText)
     );
   });
 
-  // =========================
-  // LOADING
-  // =========================
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -95,7 +84,6 @@ function Receipts() {
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Receipts</h1>
@@ -106,16 +94,13 @@ function Receipts() {
         </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      {/* Card */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        {/* Search */}
         <div className="border-b border-gray-200 p-5">
           <input
             type="text"
@@ -126,10 +111,8 @@ function Receipts() {
           />
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            {/* Table Header */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -158,17 +141,14 @@ function Receipts() {
               </tr>
             </thead>
 
-            {/* Table Body */}
             <tbody className="divide-y divide-gray-100">
               {filteredReceipts.length > 0 ? (
                 filteredReceipts.map((receipt) => {
                   const payment = receipt.paymentId;
-
                   const student = payment?.studentFeeId?.studentId;
 
                   return (
                     <tr key={receipt._id} className="hover:bg-gray-50">
-                      {/* Receipt Number */}
                       <td className="px-6 py-4">
                         <p className="font-semibold text-gray-800">
                           {receipt.receiptNumber}
@@ -178,43 +158,38 @@ function Receipts() {
                           Generated{" "}
                           {receipt.createdAt
                             ? new Date(receipt.createdAt).toLocaleDateString()
-                            : "N/A"}
+                            : ""}
                         </p>
                       </td>
 
-                      {/* Student */}
                       <td className="px-6 py-4">
                         <p className="font-medium text-gray-800">
-                          {student?.name || "Unknown Student"}
+                          {student.name}
                         </p>
 
                         <p className="text-xs text-gray-500">
-                          {student?.studentId || "N/A"}
+                          {student.studentId}
                         </p>
                       </td>
 
-                      {/* Amount */}
                       <td className="px-6 py-4">
                         <span className="font-semibold text-green-600">
                           Rs. {Number(payment?.amount || 0).toLocaleString()}
                         </span>
                       </td>
 
-                      {/* Payment Method */}
                       <td className="px-6 py-4">
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                          {payment?.paymentMethod || "N/A"}
+                          {payment?.paymentMethod || ""}
                         </span>
                       </td>
 
-                      {/* Date */}
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {payment?.paymentDate
                           ? new Date(payment.paymentDate).toLocaleDateString()
-                          : "N/A"}
+                          : ""}
                       </td>
 
-                      {/* Download */}
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => downloadReceipt(receipt)}
