@@ -8,6 +8,10 @@ function Payments() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
+  // ======================================================
+  // FETCH PAYMENTS
+  // ======================================================
+
   const fetchPayments = async () => {
     try {
       setLoading(true);
@@ -29,20 +33,33 @@ function Payments() {
     fetchPayments();
   }, []);
 
+  // ======================================================
+  // FILTER PAYMENTS
+  // ONLY PAYMENTS WITH STUDENT ARE SHOWN
+  // ======================================================
+
   const filteredPayments = payments.filter((payment) => {
     const student = payment.studentFeeId?.studentId;
 
-    const searchText = search.toLowerCase();
+    // Hide payment if student does not exist
+    if (!student) {
+      return false;
+    }
+
+    const searchText = search.toLowerCase().trim();
 
     return (
-      student?.name?.toLowerCase().includes(searchText) ||
-      student?.studentId?.toLowerCase().includes(searchText) ||
+      student.name?.toLowerCase().includes(searchText) ||
+      student.studentId?.toLowerCase().includes(searchText) ||
       payment.paymentMethod?.toLowerCase().includes(searchText) ||
       payment.transactionNumber?.toLowerCase().includes(searchText)
     );
   });
 
-  // Loading
+  // ======================================================
+  // LOADING
+  // ======================================================
+
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -51,9 +68,16 @@ function Payments() {
     );
   }
 
+  // ======================================================
+  // UI
+  // ======================================================
+
   return (
     <div>
-      {/* Header */}
+      {/* ==================================================
+          HEADER
+      ================================================== */}
+
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
@@ -71,16 +95,25 @@ function Payments() {
         </Link>
       </div>
 
-      {/* Error */}
+      {/* ==================================================
+          ERROR
+      ================================================== */}
+
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      {/* Main Card */}
+      {/* ==================================================
+          MAIN CARD
+      ================================================== */}
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        {/* Search */}
+        {/* ==================================================
+            SEARCH
+        ================================================== */}
+
         <div className="border-b border-gray-200 p-5">
           <input
             type="text"
@@ -91,10 +124,14 @@ function Payments() {
           />
         </div>
 
-        {/* Table */}
+        {/* ==================================================
+            TABLE
+        ================================================== */}
+
         <div className="overflow-x-auto">
           <table className="w-full">
-            {/* Table Header */}
+            {/* TABLE HEADER */}
+
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -119,47 +156,66 @@ function Payments() {
               </tr>
             </thead>
 
-            {/* Table Body */}
+            {/* TABLE BODY */}
+
             <tbody className="divide-y divide-gray-100">
               {filteredPayments.length > 0 ? (
                 filteredPayments.map((payment) => {
                   const student = payment.studentFeeId?.studentId;
 
                   return (
-                    <tr key={payment._id} className="hover:bg-gray-50">
-                      {/* Student */}
+                    <tr
+                      key={payment._id}
+                      className="transition hover:bg-gray-50"
+                    >
+                      {/* ==================================================
+                          STUDENT
+                      ================================================== */}
+
                       <td className="px-6 py-4">
                         <p className="font-medium text-gray-800">
-                          {student?.name || "Unknown Student"}
+                          {student.name}
                         </p>
 
                         <p className="text-xs text-gray-500">
-                          {student?.studentId || ""}
+                          {student.studentId}
                         </p>
                       </td>
 
-                      {/* Amount */}
+                      {/* ==================================================
+                          AMOUNT
+                      ================================================== */}
+
                       <td className="px-6 py-4">
                         <span className="font-semibold text-green-600">
                           Rs. {Number(payment.amount || 0).toLocaleString()}
                         </span>
                       </td>
 
-                      {/* Method */}
+                      {/* ==================================================
+                          PAYMENT METHOD
+                      ================================================== */}
+
                       <td className="px-6 py-4">
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                           {payment.paymentMethod || "Cash"}
                         </span>
                       </td>
 
-                      {/* Date */}
+                      {/* ==================================================
+                          DATE
+                      ================================================== */}
+
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {payment.paymentDate
                           ? new Date(payment.paymentDate).toLocaleDateString()
                           : "N/A"}
                       </td>
 
-                      {/* Transaction */}
+                      {/* ==================================================
+                          TRANSACTION
+                      ================================================== */}
+
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {payment.transactionNumber || "N/A"}
                       </td>
@@ -174,7 +230,7 @@ function Payments() {
                     </p>
 
                     <p className="mt-1 text-sm text-gray-400">
-                      Record a payment to see it here.
+                      Payments for registered students will appear here.
                     </p>
                   </td>
                 </tr>
